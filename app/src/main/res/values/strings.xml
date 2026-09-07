@@ -1,8 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Base en INGLES. Android sirve values-es/ a un movil en español y esto a
+  cualquier otro, que es la convencion: la carpeta sin sufijo es el respaldo
+  para los idiomas que no se han traducido.
+
+  La pantalla web que va dentro tambien es bilingue y se decide con la cabecera
+  Accept-Language, que sale de la misma configuracion del movil: asi la app y su
+  contenido nunca hablan idiomas distintos.
+-->
 <resources>
-    <string name="app_name">Yammbo Reparto</string>
-    <string name="ajustes">Ajustes</string>
-    <string name="ajustes_app">Yammbo Reparto · Ajustes</string>
-    <string name="canal_ofertas">Pedidos para repartir</string>
-    <string name="canal_servicio">En turno</string>
+    <string name="app_name">Yammbo Delivery</string>
+    <string name="ajustes">Settings</string>
+    <string name="ajustes_app">Yammbo Delivery · Settings</string>
+
+    <!-- Canales de notificacion -->
+    <string name="canal_ofertas">Orders to deliver</string>
+    <string name="canal_ofertas_desc">An order waiting for someone to take it</string>
+    <string name="canal_servicio">On shift</string>
+    <string name="canal_servicio_desc">While you are available to deliver</string>
+
+    <!-- Puerta de entrada -->
+    <string name="puerta_ubicacion_titulo">Turn on your location</string>
+    <string name="puerta_ubicacion_permiso">Without it you don\'t show up as available and no
+        orders reach you. It is the one thing this app needs to work.</string>
+    <string name="puerta_ubicacion_apagada">The permission is granted, but your phone\'s location
+        is switched off. Turn it on to be available again.</string>
+    <string name="puerta_ubicacion_boton">Grant permission</string>
+    <string name="puerta_ubicacion_ajustes">Open location settings</string>
+
+    <string name="puerta_cartel_titulo">Allow the order card</string>
+    <string name="puerta_cartel_texto">A new order has to reach you while you are looking at the
+        map or at another app. Without this permission there is no card and no Accept button —
+        just a notification you can miss.</string>
+    <string name="puerta_cartel_boton">Allow it to show on top</string>
+
+    <!-- Estado del servicio -->
+    <string name="estado_buscando">Finding your location…</string>
+    <string name="estado_sin_enlace">Delivery link missing</string>
+    <string name="estado_sin_permiso">No location permission</string>
+    <string name="estado_no_disponible">Not available · turn on location</string>
+    <string name="estado_disponible">Available</string>
+    <string name="estado_llevando">Carrying %1$d</string>
+
+    <!-- El cartel -->
+    <string name="cartel_encabezado">ORDER TO DELIVER</string>
+    <string name="cartel_aceptar">Accept</string>
+    <string name="cartel_rechazar">Decline</string>
+    <string name="aviso_titulo">Order to deliver %1$s</string>
+    <string name="aviso_aceptado">Accepted: %1$s</string>
+
+    <!-- Distancias y cobro -->
+    <string name="cobro_efectivo">Collect %1$s in cash</string>
+    <string name="cobro_tarjeta">Collect %1$s by card</string>
+    <string name="cobro_pagado">Already paid online · collect nothing</string>
+    <string name="dist_de_ti">away from you</string>
+    <string name="dist_del_local">from the restaurant</string>
+    <string name="dist_aprox">approx. %1$d min</string>
+    <string name="dist_y_mas">and %1$d more</string>
+    <string name="sin_direccion">No address</string>
+
+    <!-- Ajustes -->
+    <string name="aj_enlace">Delivery link</string>
+    <string name="aj_enlace_nota">Your manager gives it to you from the panel, under Delivery.
+        That link IS your key: it asks for no password and only shows your restaurant\'s
+        orders.</string>
+    <string name="aj_avisos">Alerts</string>
+    <string name="aj_sonido">Alarm sound when an order comes in</string>
+    <string name="aj_encima">Card on top of other apps</string>
+    <string name="aj_encima_ok">Permission granted: the card can show over any app.</string>
+    <string name="aj_encima_no">NOT granted. Without it a notification arrives, but not the card
+        with Accept and Decline.</string>
+    <string name="aj_encima_dar">Grant permission for the card</string>
+    <string name="aj_probar">Test the alert</string>
+    <string name="aj_ubicacion">Location</string>
+    <string name="aj_ubicacion_nota">Required. It is shared while you have the app open and it is
+        what keeps you available: if it goes off, you stop receiving orders. Your customers only
+        see your dot while you carry THEIR order, and never your phone number.</string>
+    <string name="aj_version">Version</string>
+    <string name="aj_instalada">Installed: %1$s (%2$d)</string>
+    <string name="aj_buscar">Check for updates</string>
+    <string name="aj_guardar">Save</string>
+    <string name="aj_guardado">Saved</string>
+    <string name="aj_enlace_malo">That is not a delivery link. It has to start with https:// and
+        contain /repartidor/</string>
+    <string name="aj_falta_encima">The permission to draw on top is missing</string>
+
+    <!-- Actualizacion -->
+    <string name="act_titulo">Version %1$s</string>
+    <string name="act_generico">There is a new version of the app.</string>
+    <string name="act_ahora_no">Not now</string>
+    <string name="act_actualizar">Update</string>
+    <string name="act_mirando">Checking…</string>
+    <string name="act_sin_comprobar">Could not check</string>
+    <string name="act_al_dia">You already have the latest (%1$s)</string>
+    <string name="act_descargando">Downloading %1$s…</string>
+    <string name="act_permiso_instalar">Allow installing apps from this source</string>
+
+    <!-- Errores -->
+    <string name="err_sin_conexion">No connection</string>
+    <string name="err_generico">Could not complete it (%1$d)</string>
+    <string name="err_entregado">Delivered already?</string>
 </resources>

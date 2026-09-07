@@ -178,18 +178,62 @@ class MainActivity : AppCompatActivity() {
             lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
     }.getOrDefault(false)
 
+    /**
+     * Dos requisitos, en orden, y ninguno se puede saltar.
+     *
+     * 1. **Ubicacion**: sin ella no se es disponible y no hay nada que ensenar.
+     * 2. **Dibujar encima**: sin ello un pedido llega como una notificacion mas,
+     *    y quien va conduciendo o mirando el mapa no la ve. El cartel con
+     *    Aceptar y Rechazar ES la app; sin el, esto no sirve para lo que se
+     *    hizo.
+     *
+     * Se piden de uno en uno: dos pantallas de permisos a la vez terminan con
+     * alguien tocando "no" a las dos.
+     */
     private fun revisarPuerta() {
-        val ok = tienePermisoUbicacion() && ubicacionEncendida()
-        if (ok) {
-            quitarBloqueo()
-            cargar()
-            ServicioReparto.arrancar(this)
-        } else {
-            mostrarBloqueo()
+        if (!tienePermisoUbicacion() || !ubicacionEncendida()) {
+            val hayPermiso = tienePermisoUbicacion()
+            mostrarBloqueo(
+                getString(R.string.puerta_ubicacion_titulo),
+                getString(
+                    if (hayPermiso) R.string.puerta_ubicacion_apagada
+                    else R.string.puerta_ubicacion_permiso
+                ),
+                getString(
+                    if (hayPermiso) R.string.puerta_ubicacion_ajustes
+                    else R.string.puerta_ubicacion_boton
+                ),
+            ) {
+                if (!tienePermisoUbicacion()) {
+                    // Si ya lo denegaron "para siempre", el dialogo no vuelve a
+                    // salir: hay que llevarles a los ajustes o se quedan tocando
+                    // un boton que no hace nada.
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(
+                            this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    ) pedirUbicacion()
+                    else abrirAjustesApp()
+                } else {
+                    runCatching { startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }
+                }
+            }
             // El servicio no se para: si el GPS vuelve, esta listo. Pero sin
             // permiso no publica nada, asi que tampoco aparece disponible.
             if (!pidiendo) pedirUbicacion()
+            return
         }
+
+        if (!Aviso.puedeDibujarEncima(this)) {
+            mostrarBloqueo(
+                getString(R.string.puerta_cartel_titulo),
+                getString(R.string.puerta_cartel_texto),
+                getString(R.string.puerta_cartel_boton),
+            ) { Aviso.pedirPermisoEncima(this) }
+            return
+        }
+
+        quitarBloqueo()
+        cargar()
+        ServicioReparto.arrancar(this)
     }
 
     private fun pedirUbicacion() {
@@ -218,9 +262,11 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == 10) revisarPuerta()
     }
 
-    private fun mostrarBloqueo() {
-        if (bloqueo != null) return
-        val hayPermiso = tienePermisoUbicacion()
+    /** Se repinta siempre: el texto cambia según cuál de los dos falte. */
+    private fun mostrarBloqueo(
+        titulo: String, texto: String, etiqueta: String, alTocar: () -> Unit,
+    ) {
+        quitarBloqueo()
         val v = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
@@ -229,26 +275,21 @@ class MainActivity : AppCompatActivity() {
             layoutParams = LinearLayout.LayoutParams(-1, 0, 1f)
 
             addView(TextView(this@MainActivity).apply {
-                text = "Activa tu ubicación"
+                text = titulo
                 setTextColor(Color.WHITE)
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
                 typeface = android.graphics.Typeface.DEFAULT_BOLD
                 gravity = Gravity.CENTER
             })
             addView(TextView(this@MainActivity).apply {
-                text = if (!hayPermiso)
-                    "Sin ella no apareces como disponible y no te llegan pedidos. " +
-                        "Es lo único que la app necesita para funcionar."
-                else
-                    "El permiso está concedido, pero la ubicación del móvil está apagada. " +
-                        "Enciéndela para volver a estar disponible."
+                text = texto
                 setTextColor(Color.parseColor("#9E9E9E"))
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
                 gravity = Gravity.CENTER
                 setPadding(0, dp(12), 0, 0)
             })
             addView(TextView(this@MainActivity).apply {
-                text = if (!hayPermiso) "Dar permiso" else "Abrir ajustes de ubicación"
+                text = etiqueta
                 gravity = Gravity.CENTER
                 typeface = android.graphics.Typeface.DEFAULT_BOLD
                 setTextColor(Color.BLACK)
@@ -258,21 +299,7 @@ class MainActivity : AppCompatActivity() {
                     setColor(Color.WHITE); cornerRadius = 999f
                 }
                 layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(26) }
-                setOnClickListener {
-                    if (!tienePermisoUbicacion()) {
-                        // Si ya lo denegaron "para siempre", el dialogo no
-                        // vuelve a salir: hay que llevarles a los ajustes o se
-                        // quedan tocando un boton que no hace nada.
-                        if (ActivityCompat.shouldShowRequestPermissionRationale(
-                                this@MainActivity, Manifest.permission.ACCESS_FINE_LOCATION)
-                        ) pedirUbicacion()
-                        else abrirAjustesApp()
-                    } else {
-                        runCatching {
-                            startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-                        }
-                    }
-                }
+                setOnClickListener { alTocar() }
             })
         }
         bloqueo = v
@@ -342,16 +369,16 @@ class MainActivity : AppCompatActivity() {
     private fun ofrecerActualizacion(v: Actualizador.Version) {
         if (isFinishing) return
         AlertDialog.Builder(this)
-            .setTitle("Versión " + v.name)
-            .setMessage(v.notas.ifBlank { "Hay una versión nueva de la app." })
-            .setNegativeButton("Ahora no", null)
-            .setPositiveButton("Actualizar") { _, _ ->
+            .setTitle(getString(R.string.act_titulo, v.name))
+            .setMessage(v.notas.ifBlank { getString(R.string.act_generico) })
+            .setNegativeButton(R.string.act_ahora_no, null)
+            .setPositiveButton(R.string.act_actualizar) { _, _ ->
                 if (!Actualizador.puedeInstalar(this)) {
-                    Toast.makeText(this, "Permite instalar apps de esta fuente", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, R.string.act_permiso_instalar, Toast.LENGTH_LONG).show()
                     Actualizador.pedirPermisoInstalar(this)
                     return@setPositiveButton
                 }
-                Toast.makeText(this, "Descargando…", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.act_descargando, v.name), Toast.LENGTH_SHORT).show()
                 Thread {
                     val error = Actualizador.descargarEInstalar(this, v)
                     if (error != null) runOnUiThread {

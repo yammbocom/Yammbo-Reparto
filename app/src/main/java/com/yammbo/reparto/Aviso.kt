@@ -55,7 +55,7 @@ object Aviso {
                     ctx.getString(R.string.canal_ofertas),
                     NotificationManager.IMPORTANCE_HIGH,
                 ).apply {
-                    description = "Un pedido esperando a que alguien lo lleve"
+                    description = ctx.getString(R.string.canal_ofertas_desc)
                     enableVibration(true)
                     vibrationPattern = longArrayOf(0, 320, 180, 320)
                     // Tono de ALARMA y uso ALARM: el de notificacion no se oye
@@ -78,7 +78,7 @@ object Aviso {
                     CANAL_SERVICIO,
                     ctx.getString(R.string.canal_servicio),
                     NotificationManager.IMPORTANCE_LOW,
-                ).apply { description = "Mientras estás disponible para repartir" }
+                ).apply { description = ctx.getString(R.string.canal_servicio_desc) }
             )
         }
     }
@@ -193,6 +193,7 @@ object Aviso {
     fun ofrecer(ctx: Context, o: Oferta, unidad: String, alDecidir: () -> Unit): Boolean {
         if (!puedeDibujarEncima(ctx)) return false
         val prefs = Prefs(ctx)
+        val t = Textos.de(ctx)
         Handler(Looper.getMainLooper()).post {
             runCatching {
                 quitar(ctx)
@@ -232,16 +233,16 @@ object Aviso {
                     }
                     setPadding(56, 46, 56, 40)
 
-                    addView(linea("PEDIDO PARA REPARTIR", 12f, Color.parseColor(GRIS), 0).apply {
+                    addView(linea(ctx.getString(R.string.cartel_encabezado), 12f, Color.parseColor(GRIS), 0).apply {
                         letterSpacing = 0.18f
                     })
                     addView(linea(o.clave, 26f, Color.WHITE, 8, negrita = true))
                     // La distancia es lo que decide un si o un no, asi que va
                     // arriba y en grande, no escondida en el detalle.
-                    Reparto.lineaDistancia(o, ultimaLat, ultimaLng, unidad)?.let {
+                    Reparto.lineaDistancia(o, ultimaLat, ultimaLng, unidad, t)?.let {
                         addView(linea(it, 19f, Color.WHITE, 10, negrita = true))
                     }
-                    addView(linea(o.direccion, 15f, Color.parseColor(GRIS_CLARO), 8))
+                    addView(linea(o.direccion.ifBlank { t.sinDireccion }, 15f, Color.parseColor(GRIS_CLARO), 8))
                     if (o.cliente.isNotBlank()) {
                         addView(linea(o.cliente, 14f, Color.parseColor(GRIS), 4))
                     }
@@ -250,7 +251,7 @@ object Aviso {
                         setBackgroundColor(Color.parseColor("#3A3A3A"))
                         layoutParams = LinearLayout.LayoutParams(-1, 2).apply { topMargin = 22 }
                     })
-                    Reparto.detalle(o).forEachIndexed { i, d ->
+                    Reparto.detalle(o, t).forEachIndexed { i, d ->
                         val sangrada = d.startsWith(" ")
                         addView(
                             linea(
@@ -264,7 +265,7 @@ object Aviso {
                     }
                     addView(
                         linea(
-                            Reparto.lineaCobro(o), 15f,
+                            Reparto.lineaCobro(o, t), 15f,
                             if (o.pagadoOnline) Color.parseColor("#34D399") else Color.parseColor(AMBAR),
                             22, negrita = true,
                         )
@@ -274,11 +275,11 @@ object Aviso {
                         orientation = LinearLayout.HORIZONTAL
                         layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = 34 }
                         addView(
-                            boton("Rechazar", false) { decidir(ctx, o, "rechazar", alDecidir) },
+                            boton(ctx.getString(R.string.cartel_rechazar), false) { decidir(ctx, o, "rechazar", alDecidir) },
                             LinearLayout.LayoutParams(0, -2, 1f).apply { rightMargin = 16 },
                         )
                         addView(
-                            boton("Aceptar", true) { decidir(ctx, o, "tomar", alDecidir) },
+                            boton(ctx.getString(R.string.cartel_aceptar), true) { decidir(ctx, o, "tomar", alDecidir) },
                             LinearLayout.LayoutParams(0, -2, 1.2f),
                         )
                     })
@@ -339,7 +340,7 @@ object Aviso {
         val app = ctx.applicationContext
         Thread {
             val prefs = Prefs(app)
-            val error = Api.accion(prefs.urlAccion(o.orderId, accion))
+            val error = Api.accion(app, prefs.urlAccion(o.orderId, accion))
             Handler(Looper.getMainLooper()).post {
                 if (error != null) {
                     // Que lo haya cogido otro es lo normal, no un fallo: se
@@ -347,7 +348,7 @@ object Aviso {
                     // direccion que ya lleva su companero.
                     Toast.makeText(app, error, Toast.LENGTH_LONG).show()
                 } else if (accion == "tomar") {
-                    Toast.makeText(app, "Aceptado: " + o.clave, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(app, app.getString(R.string.aviso_aceptado, o.clave), Toast.LENGTH_SHORT).show()
                     app.startActivity(
                         Intent(app, MainActivity::class.java)
                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
@@ -382,7 +383,7 @@ object Aviso {
             millasLocal = 2.31, mio = false,
             articulos = listOf("2  Tacos al pastor", "1  Horchata"),
         )
-        notificar(app, "Pedido para repartir " + o.clave, o.direccion)
+        notificar(app, app.getString(R.string.aviso_titulo, o.clave), o.direccion)
         sonar(app)
         despertar(app)
         return ofrecer(app, o, Prefs(app).unidad) {}

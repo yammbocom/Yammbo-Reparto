@@ -53,7 +53,7 @@ class ServicioReparto : Service(), LocationListener {
     override fun onCreate() {
         super.onCreate()
         Aviso.crearCanales(this)
-        runCatching { startForeground(1, Aviso.notificacionServicio(this, "Buscando tu ubicación…")) }
+        runCatching { startForeground(1, Aviso.notificacionServicio(this, getString(R.string.estado_buscando))) }
             .onFailure { Log.w(TAG, "sin primer plano: " + it.message) }
         runCatching {
             val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -151,8 +151,8 @@ class ServicioReparto : Service(), LocationListener {
             val prefs = Prefs(this@ServicioReparto)
             var espera = PAUSA_MS
             while (isActive) {
-                if (!prefs.configurada) { estado("Falta el enlace de reparto"); delay(5_000); continue }
-                if (!hayPermiso()) { estado("Sin permiso de ubicación"); delay(10_000); continue }
+                if (!prefs.configurada) { estado(getString(R.string.estado_sin_enlace)); delay(5_000); continue }
+                if (!hayPermiso()) { estado(getString(R.string.estado_sin_permiso)); delay(10_000); continue }
                 if (!meToca()) { delay(3_000); espera = PAUSA_MS; continue }
 
                 publicarPosicion(prefs)
@@ -168,9 +168,9 @@ class ServicioReparto : Service(), LocationListener {
                     prefs.unidad = d.unidad
                     estado(
                         when {
-                            !d.disponible -> "No disponible · activa la ubicación"
-                            d.mios.isNotEmpty() -> "Llevando " + d.mios.size
-                            else -> "Disponible"
+                            !d.disponible -> getString(R.string.estado_no_disponible)
+                            d.mios.isNotEmpty() -> getString(R.string.estado_llevando, d.mios.size)
+                            else -> getString(R.string.estado_disponible)
                         }
                     )
                     val nuevas = Vigia.nuevas(d)
@@ -204,12 +204,13 @@ class ServicioReparto : Service(), LocationListener {
     }
 
     private fun anunciar(o: Oferta, unidad: String) {
+        val t = Textos.de(this)
         val txt = listOfNotNull(
-            Reparto.lineaDistancia(o, Aviso.ultimaLat, Aviso.ultimaLng, unidad),
-            o.direccion,
-            Reparto.lineaCobro(o),
+            Reparto.lineaDistancia(o, Aviso.ultimaLat, Aviso.ultimaLng, unidad, t),
+            o.direccion.ifBlank { t.sinDireccion },
+            Reparto.lineaCobro(o, t),
         ).joinToString(" · ")
-        Aviso.notificar(this, "Pedido para repartir " + o.clave, txt)
+        Aviso.notificar(this, getString(R.string.aviso_titulo, o.clave), txt)
         Aviso.sonar(this)
         Aviso.despertar(this)
         // Si no hay permiso de superposicion, el cartel no sale. La

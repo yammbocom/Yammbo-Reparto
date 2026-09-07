@@ -1,19 +1,36 @@
 package com.yammbo.reparto
 
+import android.content.Context
 import android.util.Log
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.Locale
 
-/** Las cuatro llamadas que hace la app. Todas bloquean: nunca desde el hilo principal. */
+/** Las llamadas que hace la app. Todas bloquean: nunca desde el hilo principal. */
 object Api {
 
     private const val TAG = "YammboReparto"
+
+    /**
+     * El idioma del movil viaja en cada peticion.
+     *
+     * La pantalla es una pagina del servidor y sus errores tambien vienen de
+     * ahi ("ese pedido ya lo lleva otra persona"). Sin esta cabecera, una app en
+     * ingles ensenaria mensajes en castellano en el peor momento: cuando algo
+     * ha salido mal.
+     */
+    private fun idioma(): String {
+        val l = Locale.getDefault()
+        val tag = l.language.ifBlank { "es" }
+        return tag + "-" + (l.country.ifBlank { tag.uppercase() }) + "," + tag + ";q=0.9"
+    }
 
     private fun abrir(url: String, metodo: String): HttpURLConnection =
         (URL(url).openConnection() as HttpURLConnection).apply {
             requestMethod = metodo
             setRequestProperty("accept", "application/json")
-            setRequestProperty("User-Agent", "Yammbo-Reparto")
+            setRequestProperty("accept-language", idioma())
+            setRequestProperty("User-Agent", "Yammbo-Delivery")
             connectTimeout = 8_000
             readTimeout = 8_000
         }
@@ -65,7 +82,7 @@ object Api {
      * leerian los dos "sin asignar", asi que el que llega segundo recibe aqui
      * el "ya lo lleva otra persona" y hay que ensenarselo tal cual.
      */
-    fun accion(url: String): String? {
+    fun accion(ctx: Context, url: String): String? {
         val c = abrir(url, "POST")
         return try {
             val code = c.responseCode
@@ -75,9 +92,9 @@ object Api {
             }.getOrNull()
             runCatching { org.json.JSONObject(cuerpo ?: "").optString("error") }
                 .getOrNull()?.ifBlank { null }
-                ?: ("No se pudo completar (" + code + ")")
+                ?: ctx.getString(R.string.err_generico, code)
         } catch (e: Exception) {
-            "Sin conexión"
+            ctx.getString(R.string.err_sin_conexion)
         } finally {
             c.disconnect()
         }

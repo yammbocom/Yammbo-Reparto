@@ -119,35 +119,39 @@ object Reparto {
      * dice entero: cuanto y en que. "Ya pagado" tambien importa — cobrar dos
      * veces es peor que no cobrar.
      */
-    fun lineaCobro(o: Oferta): String = when {
-        o.pagadoOnline -> "Ya pagado en línea · no cobres nada"
-        o.metodoPago == "card_on_pickup" -> "Cobrar " + dinero(o.cobrar, o.moneda) + " con tarjeta"
-        else -> "Cobrar " + dinero(o.cobrar, o.moneda) + " en efectivo"
+    fun lineaCobro(o: Oferta, t: Textos): String = when {
+        o.pagadoOnline -> t.cobroPagado
+        o.metodoPago == "card_on_pickup" -> t.cobroTarjeta.format(dinero(o.cobrar, o.moneda))
+        else -> t.cobroEfectivo.format(dinero(o.cobrar, o.moneda))
     }
 
     /**
      * El renglon de debajo del titulo del cartel: a cuanto esta y cuanto se
      * tarda. Si no se sabe donde esta el movil, no se inventa una distancia.
      */
-    fun lineaDistancia(o: Oferta, desdeLat: Double?, desdeLng: Double?, unidad: String): String? {
+    fun lineaDistancia(
+        o: Oferta, desdeLat: Double?, desdeLng: Double?, unidad: String, t: Textos,
+    ): String? {
+        val propia = desdeLat != null && desdeLng != null && o.lat != null && o.lng != null
         val mi = when {
-            desdeLat != null && desdeLng != null && o.lat != null && o.lng != null ->
-                millas(desdeLat, desdeLng, o.lat, o.lng)
+            propia -> millas(desdeLat!!, desdeLng!!, o.lat!!, o.lng!!)
             // Sin posicion propia sirve la del local: sigue diciendo si el
             // pedido es de la esquina o de la otra punta.
             else -> o.millasLocal
         } ?: return null
         val d = distancia(mi, unidad) ?: return null
         val m = minutos(mi)
-        val desde = if (desdeLat != null && o.lat != null) "de ti" else "del local"
-        return d + " " + desde + (if (m != null) " · aprox. " + m + " min" else "")
+        // No puede decir "de ti" cuando no se sabe donde esta uno: seria mentir
+        // sobre la unica cifra que decide si se acepta el pedido.
+        val desde = if (propia) t.deTi else t.delLocal
+        return d + " " + desde + (if (m != null) " · " + t.aprox.format(m) else "")
     }
 
     /** El detalle del pedido para el cartel, recortado a lo que cabe. */
-    fun detalle(o: Oferta, max: Int = 4): List<String> {
+    fun detalle(o: Oferta, t: Textos, max: Int = 4): List<String> {
         val l = ArrayList<String>()
         o.articulos.take(max).forEach { l.add(it) }
-        if (o.articulos.size > max) l.add("y " + (o.articulos.size - max) + " más")
+        if (o.articulos.size > max) l.add(t.yMas.format(o.articulos.size - max))
         if (!o.nota.isNullOrBlank()) l.add(" " + o.nota)
         return l
     }
@@ -181,7 +185,9 @@ object Reparto {
                     Oferta(
                         orderId = id,
                         clave = o.optString("order_key"),
-                        direccion = o.optString("address").ifBlank { "Sin dirección" },
+                        // Se guarda tal cual, vacia si viene vacia: el texto de
+                        // relleno depende del idioma y aqui no hay recursos.
+                        direccion = o.optString("address"),
                         lat = numero(o, "address_lat"),
                         lng = numero(o, "address_lng"),
                         cliente = o.optString("customer_name"),

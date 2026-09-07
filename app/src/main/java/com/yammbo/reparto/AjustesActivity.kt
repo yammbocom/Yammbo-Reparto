@@ -46,12 +46,9 @@ class AjustesActivity : AppCompatActivity() {
         setContentView(scroll)
         insets(scroll)
 
-        col.addView(titulo("Enlace de reparto"))
+        col.addView(titulo(getString(R.string.aj_enlace)))
         col.addView(
-            nota(
-                "Te lo da el encargado desde el panel, en Reparto. Ese enlace ES tu llave: " +
-                    "no pide contraseña y solo ve los pedidos de tu local."
-            )
+            nota(getString(R.string.aj_enlace_nota))
         )
         url = EditText(this).apply {
             setText(prefs.url)
@@ -63,80 +60,66 @@ class AjustesActivity : AppCompatActivity() {
         }
         col.addView(url)
 
-        col.addView(titulo("Avisos"))
-        sonido = casilla("Sonido de alarma al entrar un pedido", prefs.sonido)
+        col.addView(titulo(getString(R.string.aj_avisos)))
+        sonido = casilla(getString(R.string.aj_sonido), prefs.sonido)
         col.addView(sonido)
-        encima = casilla("Cartel encima de otras apps", prefs.encima)
+        encima = casilla(getString(R.string.aj_encima), prefs.encima)
         col.addView(encima)
         estadoEncima = nota("")
         col.addView(estadoEncima)
-        col.addView(boton("Dar permiso para el cartel") { Aviso.pedirPermisoEncima(this) })
-        col.addView(boton("Probar el aviso") {
+        col.addView(boton(getString(R.string.aj_encima_dar)) { Aviso.pedirPermisoEncima(this) })
+        col.addView(boton(getString(R.string.aj_probar)) {
             if (!Aviso.probar(this)) {
-                Toast.makeText(this, "Falta el permiso para dibujar encima", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, R.string.aj_falta_encima, Toast.LENGTH_LONG).show()
             }
         })
 
-        col.addView(titulo("Ubicación"))
+        col.addView(titulo(getString(R.string.aj_ubicacion)))
         col.addView(
-            nota(
-                "Obligatoria. Se comparte mientras tienes la app abierta y es lo que te " +
-                    "mantiene disponible: si se apaga, dejas de recibir pedidos. Tus clientes " +
-                    "solo ven tu punto mientras llevas SU pedido, y nunca tu teléfono."
-            )
+            nota(getString(R.string.aj_ubicacion_nota))
         )
 
-        col.addView(titulo("Versión"))
+        col.addView(titulo(getString(R.string.aj_version)))
         col.addView(
-            nota(
-                "Instalada: " + Actualizador.nombreInstalado(this) +
-                    " (" + Actualizador.instalada(this) + ")"
-            )
+            nota(getString(R.string.aj_instalada, Actualizador.nombreInstalado(this), Actualizador.instalada(this)))
         )
-        col.addView(boton("Buscar actualización") { buscarActualizacion() })
+        col.addView(boton(getString(R.string.aj_buscar)) { buscarActualizacion() })
 
-        col.addView(boton("Guardar", relleno = true) { guardar() })
+        col.addView(boton(getString(R.string.aj_guardar), relleno = true) { guardar() })
     }
 
     override fun onResume() {
         super.onResume()
         val ok = Aviso.puedeDibujarEncima(this)
-        estadoEncima.text = if (ok)
-            "Permiso concedido: el cartel puede salir sobre cualquier app."
-        else
-            "SIN permiso. Sin él llega la notificación, pero no el cartel con Aceptar y Rechazar."
+        estadoEncima.text = getString(if (ok) R.string.aj_encima_ok else R.string.aj_encima_no)
         estadoEncima.setTextColor(Color.parseColor(if (ok) "#34D399" else "#FBBF24"))
     }
 
     private fun guardar() {
         val v = url.text.toString().trim()
         if (v.isNotEmpty() && !(v.startsWith("https://") && v.contains("/repartidor/"))) {
-            Toast.makeText(
-                this,
-                "Ese no es un enlace de reparto. Tiene que empezar por https:// y llevar /repartidor/",
-                Toast.LENGTH_LONG,
-            ).show()
+            Toast.makeText(this, R.string.aj_enlace_malo, Toast.LENGTH_LONG).show()
             return
         }
         prefs.url = v
         prefs.sonido = sonido.isChecked
         prefs.encima = encima.isChecked
         if (prefs.configurada) ServicioReparto.arrancar(this)
-        Toast.makeText(this, "Guardado", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, R.string.aj_guardado, Toast.LENGTH_SHORT).show()
         finish()
     }
 
     private fun buscarActualizacion() {
-        Toast.makeText(this, "Mirando…", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, R.string.act_mirando, Toast.LENGTH_SHORT).show()
         Thread {
             val v = Actualizador.ultima()
             runOnUiThread {
                 when {
-                    v == null -> Toast.makeText(this, "No se pudo comprobar", Toast.LENGTH_LONG).show()
+                    v == null -> Toast.makeText(this, R.string.act_sin_comprobar, Toast.LENGTH_LONG).show()
                     !Actualizador.hayNueva(this, v) ->
-                        Toast.makeText(this, "Ya tienes la última (" + v.name + ")", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, getString(R.string.act_al_dia, v.name), Toast.LENGTH_LONG).show()
                     else -> {
-                        Toast.makeText(this, "Descargando " + v.name + "…", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, getString(R.string.act_descargando, v.name), Toast.LENGTH_SHORT).show()
                         Thread {
                             val e = Actualizador.descargarEInstalar(this, v)
                             if (e != null) runOnUiThread {

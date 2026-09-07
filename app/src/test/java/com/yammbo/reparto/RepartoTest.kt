@@ -18,6 +18,19 @@ import kotlin.math.abs
  */
 class RepartoTest {
 
+    // Los mismos formatos que strings.xml, aquí a mano: así el núcleo se sigue
+    // pudiendo probar sin recursos de Android ni Robolectric.
+    private val t = Textos(
+        cobroEfectivo = "Cobrar %1\$s en efectivo",
+        cobroTarjeta = "Cobrar %1\$s con tarjeta",
+        cobroPagado = "Ya pagado en línea · no cobres nada",
+        deTi = "de ti",
+        delLocal = "del local",
+        aprox = "aprox. %1\$d min",
+        yMas = "y %1\$d más",
+        sinDireccion = "Sin dirección",
+    )
+
     private fun oferta(
         id: String = "a1",
         lat: Double? = 34.0700, lng: Double? = -118.2600,
@@ -103,9 +116,9 @@ class RepartoTest {
 
     @Test
     fun `el cobro distingue efectivo, tarjeta y ya pagado`() {
-        assertTrue(Reparto.lineaCobro(oferta()).contains("efectivo"))
-        assertTrue(Reparto.lineaCobro(oferta(metodo = "card_on_pickup")).contains("tarjeta"))
-        val pagado = Reparto.lineaCobro(oferta(cobrar = null, metodo = "online"))
+        assertTrue(Reparto.lineaCobro(oferta(), t).contains("efectivo"))
+        assertTrue(Reparto.lineaCobro(oferta(metodo = "card_on_pickup"), t).contains("tarjeta"))
+        val pagado = Reparto.lineaCobro(oferta(cobrar = null, metodo = "online"), t)
         assertTrue(pagado.contains("no cobres"))
         // 🚨 Cobrar dos veces es peor que no cobrar: en un pedido ya pagado no
         // puede aparecer ningun importe.
@@ -114,7 +127,7 @@ class RepartoTest {
 
     @Test
     fun `la distancia del cartel sale de donde esta el movil`() {
-        val con = Reparto.lineaDistancia(oferta(), 34.0522, -118.2437, "mi")
+        val con = Reparto.lineaDistancia(oferta(), 34.0522, -118.2437, "mi", t)
         assertNotNull(con)
         assertTrue(con!!.contains("de ti"))
         assertTrue(con.contains("min"))
@@ -122,7 +135,7 @@ class RepartoTest {
 
     @Test
     fun `sin posicion propia se usa la del local y se dice`() {
-        val sin = Reparto.lineaDistancia(oferta(), null, null, "mi")
+        val sin = Reparto.lineaDistancia(oferta(), null, null, "mi", t)
         assertNotNull(sin)
         // No puede decir "de ti" cuando no sabe donde esta uno: seria mentir
         // sobre la unica cifra que decide si se acepta el pedido.
@@ -133,7 +146,7 @@ class RepartoTest {
     @Test
     fun `sin ningun dato de distancia no se escribe nada`() {
         val nada = Reparto.lineaDistancia(
-            oferta(lat = null, lng = null, millasLocal = null), null, null, "mi",
+            oferta(lat = null, lng = null, millasLocal = null), null, null, "mi", t,
         )
         assertNull(nada)
     }
@@ -144,7 +157,7 @@ class RepartoTest {
             nota = "Timbre roto",
             articulos = listOf("1 A", "1 B", "1 C", "1 D", "1 E", "1 F"),
         )
-        val d = Reparto.detalle(larga, max = 4)
+        val d = Reparto.detalle(larga, t, max = 4)
         assertEquals(6, d.size)                       // 4 + "y 2 mas" + nota
         assertTrue(d.any { it.contains("y 2 más") })
         assertTrue(d.last().trim() == "Timbre roto")

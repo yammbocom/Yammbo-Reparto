@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Español. Android sirve esto a un movil configurado en español y values/ (en
+     ingles) a cualquier otro. -->
+<resources>
+    <string name="ajustes">Ajustes</string>
+    <string name="ajustes_app">Yammbo Delivery · Ajustes</string>
+
+    <string name="canal_ofertas">Pedidos para repartir</string>
+    <string name="canal_ofertas_desc">Un pedido esperando a que alguien lo lleve</string>
+    <string name="canal_servicio">En turno</string>
+    <string name="canal_servicio_desc">Mientras estás disponible para repartir</string>
+
+    <string name="puerta_ubicacion_titulo">Activa tu ubicación</string>
+    <string name="puerta_ubicacion_permiso">Sin ella no apareces como disponible y no te llegan
+        pedidos. Es lo único que la app necesita para funcionar.</string>
+    <string name="puerta_ubicacion_apagada">El permiso está concedido, pero la ubicación del móvil
+        está apagada. Enciéndela para volver a estar disponible.</string>
+    <string name="puerta_ubicacion_boton">Dar permiso</string>
+    <string name="puerta_ubicacion_ajustes">Abrir ajustes de ubicación</string>
+
+    <string name="puerta_cartel_titulo">Permite el cartel</string>
+    <string name="puerta_cartel_texto">Un pedido nuevo tiene que llegarte mientras miras el mapa o
+        cualquier otra app. Sin este permiso no hay cartel ni botón de aceptar, solo una
+        notificación que se puede pasar por alto.</string>
+    <string name="puerta_cartel_boton">Permitir mostrar encima</string>
+
+    <string name="estado_buscando">Buscando tu ubicación…</string>
+    <string name="estado_sin_enlace">Falta el enlace de reparto</string>
+    <string name="estado_sin_permiso">Sin permiso de ubicación</string>
+    <string name="estado_no_disponible">No disponible · activa la ubicación</string>
+    <string name="estado_disponible">Disponible</string>
+    <string name="estado_llevando">Llevando %1$d</string>
+
+    <string name="cartel_encabezado">PEDIDO PARA REPARTIR</string>
+    <string name="cartel_aceptar">Aceptar</string>
+    <string name="cartel_rechazar">Rechazar</string>
+    <string name="aviso_titulo">Pedido para repartir %1$s</string>
+    <string name="aviso_aceptado">Aceptado: %1$s</string>
+
+    <string name="cobro_efectivo">Cobrar %1$s en efectivo</string>
+    <string name="cobro_tarjeta">Cobrar %1$s con tarjeta</string>
+    <string name="cobro_pagado">Ya pagado en línea · no cobres nada</string>
+    <string name="dist_de_ti">de ti</string>
+    <string name="dist_del_local">del local</string>
+    <string name="dist_aprox">aprox. %1$d min</string>
+    <string name="dist_y_mas">y %1$d más</string>
+    <string name="sin_direccion">Sin dirección</string>
+
+    <string name="aj_enlace">Enlace de reparto</string>
+    <string name="aj_enlace_nota">Te lo da el encargado desde el panel, en Reparto. Ese enlace ES
+        tu llave: no pide contraseña y solo ve los pedidos de tu local.</string>
+    <string name="aj_avisos">Avisos</string>
+    <string name="aj_sonido">Sonido de alarma al entrar un pedido</string>
+    <string name="aj_encima">Cartel encima de otras apps</string>
+    <string name="aj_encima_ok">Permiso concedido: el cartel puede salir sobre cualquier app.</string>
+    <string name="aj_encima_no">SIN permiso. Sin él llega la notificación, pero no el cartel con
+        Aceptar y Rechazar.</string>
+    <string name="aj_encima_dar">Dar permiso para el cartel</string>
+    <string name="aj_probar">Probar el aviso</string>
+    <string name="aj_ubicacion">Ubicación</string>
+    <string name="aj_ubicacion_nota">Obligatoria. Se comparte mientras tienes la app abierta y es
+        lo que te mantiene disponible: si se apaga, dejas de recibir pedidos. Tus clientes solo ven
+        tu punto mientras llevas SU pedido, y nunca tu teléfono.</string>
+    <string name="aj_version">Versión</string>
+    <string name="aj_instalada">Instalada: %1$s (%2$d)</string>
+    <string name="aj_buscar">Buscar actualización</string>
+    <string name="aj_guardar">Guardar</string>
+    <string name="aj_guardado">Guardado</string>
+    <string name="aj_enlace_malo">Ese no es un enlace de reparto. Tiene que empezar por https:// y
+        llevar /repartidor/</string>
+    <string name="aj_falta_encima">Falta el permiso para dibujar encima</string>
+
+    <string name="act_titulo">Versión %1$s</string>
+    <string name="act_generico">Hay una versión nueva de la app.</string>
+    <string name="act_ahora_no">Ahora no</string>
+    <string name="act_actualizar">Actualizar</string>
+    <string name="act_mirando">Mirando…</string>
+    <string name="act_sin_comprobar">No se pudo comprobar</string>
+    <string name="act_al_dia">Ya tienes la última (%1$s)</string>
+    <string name="act_descargando">Descargando %1$s…</string>
+    <string name="act_permiso_instalar">Permite instalar apps de esta fuente</string>
+
+    <string name="err_sin_conexion">Sin conexión</string>
+    <string name="err_generico">No se pudo completar (%1$d)</string>
+    <string name="err_entregado">¿Entregado ya?</string>
+</resources>

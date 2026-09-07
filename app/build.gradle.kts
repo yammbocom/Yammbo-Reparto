@@ -46,8 +46,8 @@ android {
         // El respaldo del actualizador deduce el codigo del tag de GitHub
         // (v1.1 -> 1); si se rompe esa correspondencia, la app compara mal y
         // deja de ver actualizaciones EN SILENCIO.
-        versionCode = 1
-        versionName = "1.1"
+        versionCode = 2
+        versionName = "1.2"
     }
 
     if (hayFirma) {
