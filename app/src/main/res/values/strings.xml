@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Yammbo Reparto</string>
+    <string name="ajustes">Ajustes</string>
+    <string name="ajustes_app">Yammbo Reparto · Ajustes</string>
+    <string name="canal_ofertas">Pedidos para repartir</string>
+    <string name="canal_servicio">En turno</string>
+</resources>

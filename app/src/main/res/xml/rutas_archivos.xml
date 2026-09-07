@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- El APK descargado vive en la cache: si la actualizacion se queda a medias,
+     el sistema lo borra solo y no deja megas tirados en la tablet. -->
+<paths>
+    <cache-path name="updates" path="." />
+</paths>

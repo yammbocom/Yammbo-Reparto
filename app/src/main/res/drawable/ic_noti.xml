@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icono de la barra de estado.
+     Android lo pinta como SILUETA: el color se ignora y cuenta solo el alfa,
+     asi que un trazo "negro" encima no seria un hueco sino mas mancha. Por eso
+     el interior se vacia de verdad con fillType="evenOdd", y dentro del hueco
+     van las tres lineas de la comanda.
+     Es una comanda con el borde rasgado: el sobre de correo que habia antes
+     decia "mensaje", no "pedido". -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+
+    <!-- Contorno del papel: rectangulo exterior + hueco interior (evenOdd) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M4,2 H20 V21 L18,19.6 L16,21 L14,19.6 L12,21 L10,19.6 L8,21 L6,19.6 L4,21 Z M6,4 H18 V17 H6 Z" />
+
+    <!-- Las lineas, dentro del hueco -->
+    <path android:fillColor="#FFFFFF" android:pathData="M8,6.4 h8 v1.7 h-8 z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M8,9.9 h8 v1.7 h-8 z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M8,13.4 h5 v1.7 h-5 z" />
+</vector>
