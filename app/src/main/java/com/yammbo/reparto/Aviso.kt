@@ -367,7 +367,15 @@ object Aviso {
         }
     }
 
-    /** Dispara el aviso completo para probarlo sin esperar a un pedido real. */
+    /**
+     * Dispara el aviso completo para probarlo sin esperar a un pedido real.
+     *
+     * 🚨 El ejemplo va **pagado en linea**, que es lo unico que puede llegar
+     * hoy: la tienda fija `payment_method='online'` y esta pantalla solo recibe
+     * pedidos de la web. Un ejemplo que dijera "cobrar en efectivo" enseñaria a
+     * quien reparte a pedir dinero por algo que ya esta cobrado, y eso se
+     * aprende con el primer cliente enfadado, no con el segundo.
+     */
     fun probar(ctx: Context): Boolean {
         val app = ctx.applicationContext
         crearCanales(app)
@@ -379,7 +387,7 @@ object Aviso {
             cliente = "Frank Test",
             telefono = "3105550000",
             nota = "Timbre roto, llamar al llegar",
-            cobrar = 23.4, moneda = "USD", metodoPago = "cash_on_pickup",
+            cobrar = null, moneda = "USD", metodoPago = "online",
             millasLocal = 2.31, mio = false,
             articulos = listOf("2  Tacos al pastor", "1  Horchata"),
         )
