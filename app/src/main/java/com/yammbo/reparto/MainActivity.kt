@@ -46,7 +46,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var raiz: LinearLayout
     private lateinit var web: WebView
     private var bloqueo: View? = null
-    private var pidiendo = false
+    /**
+     * Pestillo de un solo uso: los permisos se piden UNA vez por instancia.
+     *
+     * No es "hay una peticion en curso". Ponerlo a false en algun sitio es
+     * justo el fallo que se arreglo: el sistema contesta al instante cuando
+     * descarta una peticion, y con un flag que se apaga ahi se vuelve a pedir
+     * en bucle hasta desbordar la pila.
+     */
+    private var yaPedidos = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,7 +79,6 @@ class MainActivity : AppCompatActivity() {
         configurarWeb()
 
         Aviso.crearCanales(this)
-        pedirNotificaciones()
     }
 
     // ── barra ───────────────────────────────────────────────────────────────
@@ -210,15 +217,16 @@ class MainActivity : AppCompatActivity() {
                     // un boton que no hace nada.
                     if (ActivityCompat.shouldShowRequestPermissionRationale(
                             this, Manifest.permission.ACCESS_FINE_LOCATION)
-                    ) pedirUbicacion()
+                    ) pedirPermisos()
                     else abrirAjustesApp()
                 } else {
                     runCatching { startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }
                 }
             }
-            // El servicio no se para: si el GPS vuelve, esta listo. Pero sin
-            // permiso no publica nada, asi que tampoco aparece disponible.
-            if (!pidiendo) pedirUbicacion()
+            // Solo la primera vez que se pinta la puerta. Insistir en cada
+            // onResume reabriria el dialogo del sistema una y otra vez a quien
+            // acaba de decir que no.
+            if (!yaPedidos) pedirPermisos()
             return
         }
 
@@ -236,30 +244,47 @@ class MainActivity : AppCompatActivity() {
         ServicioReparto.arrancar(this)
     }
 
-    private fun pedirUbicacion() {
-        if (tienePermisoUbicacion()) return
-        pidiendo = true
-        ActivityCompat.requestPermissions(
-            this,
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
-            10,
-        )
+    /**
+     * TODOS los permisos de golpe, en UNA sola peticion.
+     *
+     * 🚨 Android solo admite una peticion de permisos a la vez. La segunda no
+     * falla: el framework la descarta y llama a onRequestPermissionsResult EN
+     * EL ACTO con arrays vacios (Activity.java, "Can request only one set of
+     * permissions at a time"). Pedir ubicacion en onResume mientras seguia viva
+     * la de notificaciones de onCreate provocaba esa llamada sincrona, que
+     * volvia a pedir, que volvia a ser descartada... hasta desbordar la pila.
+     * Se cerraba SIEMPRE en el primer arranque y nunca despues, porque a la
+     * segunda ya no habia dos peticiones que chocaran.
+     */
+    private fun permisosQueFaltan(): Array<String> {
+        val l = ArrayList<String>(3)
+        if (!tienePermisoUbicacion()) {
+            l.add(Manifest.permission.ACCESS_FINE_LOCATION)
+            l.add(Manifest.permission.ACCESS_COARSE_LOCATION)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) l.add(Manifest.permission.POST_NOTIFICATIONS)
+        return l.toTypedArray()
     }
 
-    private fun pedirNotificaciones() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
-            PackageManager.PERMISSION_GRANTED
-        ) return
-        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 11)
+    private fun pedirPermisos() {
+        val faltan = permisosQueFaltan()
+        if (faltan.isEmpty()) return
+        yaPedidos = true
+        ActivityCompat.requestPermissions(this, faltan, 10)
     }
 
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray,
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        pidiendo = false
-        if (requestCode == 10) revisarPuerta()
+        // 🚨 De aqui NO se vuelve a pedir nada, ni siquiera con los arrays
+        // vacios que significan "cancelado". Ese era el motor de la recursion:
+        // el guardia se apagaba justo antes y no servia de nada.
+        // Volver a pedir es cosa del boton de la pantalla de bloqueo.
+        revisarPuerta()
     }
 
     /** Se repinta siempre: el texto cambia según cuál de los dos falte. */

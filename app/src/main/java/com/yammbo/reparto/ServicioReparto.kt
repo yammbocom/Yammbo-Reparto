@@ -53,8 +53,16 @@ class ServicioReparto : Service(), LocationListener {
     override fun onCreate() {
         super.onCreate()
         Aviso.crearCanales(this)
-        runCatching { startForeground(1, Aviso.notificacionServicio(this, getString(R.string.estado_buscando))) }
-            .onFailure { Log.w(TAG, "sin primer plano: " + it.message) }
+        // 🚨 Un servicio de tipo `location` sin permiso de ubicacion lanza al
+        // entrar en primer plano (Android 14+). Tragarse esa excepcion no
+        // arregla nada: un servicio arrancado como foreground que nunca llega a
+        // serlo lo mata el sistema a los pocos segundos con
+        // ForegroundServiceDidNotStartInTimeException, y eso cierra la app.
+        // Si no se puede, se para aqui y ya.
+        val enPie = runCatching {
+            startForeground(1, Aviso.notificacionServicio(this, getString(R.string.estado_buscando)))
+        }.onFailure { Log.w(TAG, "sin primer plano: " + it.message) }.isSuccess
+        if (!enPie) { stopSelf(); return }
         runCatching {
             val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
             wake = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "yammbo:reparto-svc")
@@ -252,7 +260,14 @@ class ServicioReparto : Service(), LocationListener {
         /** Latido: como mucho este hueco sin publicar nada. */
         private const val LATIDO_MS = 45_000L
 
+        /** Sin permiso de ubicacion ni se intenta: ver el comentario de onCreate. */
         fun arrancar(ctx: Context) {
+            val hayPermiso =
+                ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) ==
+                    PackageManager.PERMISSION_GRANTED ||
+                    ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+                    PackageManager.PERMISSION_GRANTED
+            if (!hayPermiso) { Log.w(TAG, "sin permiso de ubicacion: no se arranca"); return }
             val i = Intent(ctx, ServicioReparto::class.java)
             runCatching {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ctx.startForegroundService(i)
