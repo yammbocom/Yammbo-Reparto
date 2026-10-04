@@ -50,6 +50,24 @@ android {
         versionName = "1.4"
     }
 
+    flavorDimensions += "dist"
+    productFlavors {
+        // Google Play: sin autoactualizacion ni intencion de pantalla completa.
+        create("play") {
+            dimension = "dist"
+            buildConfigField("boolean", "SELF_UPDATE", "false")
+            buildConfigField("boolean", "FULL_SCREEN_ALERT", "false")
+        }
+        // Instalacion directa (APK): el comportamiento de siempre.
+        create("direct") {
+            dimension = "dist"
+            buildConfigField("boolean", "SELF_UPDATE", "true")
+            buildConfigField("boolean", "FULL_SCREEN_ALERT", "true")
+        }
+    }
+
+    buildFeatures { buildConfig = true }
+
     if (hayFirma) {
         signingConfigs {
             create("yammbo") {

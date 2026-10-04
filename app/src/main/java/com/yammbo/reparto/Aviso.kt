@@ -116,17 +116,15 @@ object Aviso {
         val b = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             Notification.Builder(ctx, CANAL_OFERTAS)
         else @Suppress("DEPRECATION") Notification.Builder(ctx).setPriority(Notification.PRIORITY_HIGH)
-        nm.notify(
-            ID_OFERTA,
-            b.setContentTitle(titulo)
-                .setContentText(cuerpo)
-                .setStyle(Notification.BigTextStyle().bigText(cuerpo))
-                .setSmallIcon(R.drawable.ic_noti)
-                .setAutoCancel(true)
-                .setContentIntent(abrir)
-                .setFullScreenIntent(abrir, true)
-                .build(),
-        )
+        b.setContentTitle(titulo)
+            .setContentText(cuerpo)
+            .setStyle(Notification.BigTextStyle().bigText(cuerpo))
+            .setSmallIcon(R.drawable.ic_noti)
+            .setAutoCancel(true)
+            .setContentIntent(abrir)
+        // Google Play restringe la intencion a pantalla completa: solo en `direct`.
+        if (BuildConfig.FULL_SCREEN_ALERT) b.setFullScreenIntent(abrir, true)
+        nm.notify(ID_OFERTA, b.build())
     }
 
     fun quitarNotificacion(ctx: Context) {

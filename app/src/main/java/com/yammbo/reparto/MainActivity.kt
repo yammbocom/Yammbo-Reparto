@@ -383,6 +383,7 @@ class MainActivity : AppCompatActivity() {
     // ── actualizacion ───────────────────────────────────────────────────────
 
     private fun mirarActualizacion() {
+        if (!BuildConfig.SELF_UPDATE) return
         if (!Actualizador.tocaMirar(this)) return
         Thread {
             val v = Actualizador.ultima() ?: return@Thread

@@ -27,11 +27,6 @@
          la razon de que esto sea una app y no una pestana. -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
-    <!-- Actualizarse sola: descargar el APK y ABRIR el instalador, donde
-         alguien confirma una vez. Android no deja instalar en silencio a una
-         app normal. -->
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-
     <!-- Un movil sin GPS no puede repartir, pero no se marca `required` para no
          excluir tablets con solo red; el codigo ya exige una posicion real. -->
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
@@ -70,16 +65,6 @@
             android:name=".ServicioReparto"
             android:exported="false"
             android:foregroundServiceType="location" />
-
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.updates"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/rutas_archivos" />
-        </provider>
 
     </application>
 </manifest>

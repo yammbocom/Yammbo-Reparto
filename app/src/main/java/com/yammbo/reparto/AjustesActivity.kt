@@ -83,7 +83,9 @@ class AjustesActivity : AppCompatActivity() {
         col.addView(
             nota(getString(R.string.aj_instalada, Actualizador.nombreInstalado(this), Actualizador.instalada(this)))
         )
-        col.addView(boton(getString(R.string.aj_buscar)) { buscarActualizacion() })
+        if (BuildConfig.SELF_UPDATE) {
+            col.addView(boton(getString(R.string.aj_buscar)) { buscarActualizacion() })
+        }
 
         col.addView(boton(getString(R.string.aj_guardar), relleno = true) { guardar() })
     }
