@@ -50,6 +50,26 @@ object Api {
     }
 
     /**
+     * El codigo HTTP de un enlace recien pegado, o -1 si no hubo red.
+     *
+     * Sirve para distinguir al emparejar "ese enlace no vale" (404: token
+     * revocado o mal copiado) de "no hay internet", que piden cosas distintas
+     * a quien lo esta pegando. Cualquier 2xx da el enlace por bueno ([esValido]).
+     */
+    fun esValido(codigo: Int): Boolean = codigo in 200..299
+
+    fun comprobar(url: String): Int {
+        val c = runCatching { abrir(url, "GET") }.getOrElse { return -1 }
+        return try {
+            c.responseCode
+        } catch (e: Exception) {
+            Log.d(TAG, "sin respuesta al comprobar: " + e.message); -1
+        } finally {
+            c.disconnect()
+        }
+    }
+
+    /**
      * Publica donde esta. Es lo que le mantiene "disponible": el servidor da
      * por caducado un punto de mas de tres minutos.
      */

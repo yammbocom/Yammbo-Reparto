@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copia de Ui.CLARA para lo que pinta el tema. La fuente de verdad es Ui.kt:
+     si cambia alli, cambia aqui. -->
+<resources>
+    <color name="y_fondo">#FFFFFF</color>
+    <color name="y_texto">#0B0B0B</color>
+    <color name="y_texto2">#5F5F5F</color>
+    <!-- Fondo del icono adaptativo: negro en los dos modos. -->
+    <color name="icono_fondo">#000000</color>
+</resources>

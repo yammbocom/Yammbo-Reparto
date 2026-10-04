@@ -6,8 +6,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
 import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.net.Uri
@@ -16,14 +14,15 @@ import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
-import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.ScrollView
 import android.widget.Toast
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 
 /**
  * El aviso de que hay un pedido: notificacion, sonido y el cartel encima de lo
@@ -98,15 +97,28 @@ object Aviso {
         val b = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             Notification.Builder(ctx, CANAL_SERVICIO)
         else @Suppress("DEPRECATION") Notification.Builder(ctx)
-        return b.setContentTitle(ctx.getString(R.string.app_name))
+        // "Turno activo" arriba y la verdad sobre el GPS debajo: el titulo dice
+        // que el servicio corre, el texto si de verdad se esta disponible.
+        b.setContentTitle(ctx.getString(R.string.noti_turno_activo))
             .setContentText(texto)
             .setSmallIcon(R.drawable.ic_noti)
             .setOngoing(true)
+            .setShowWhen(false)
+            .setCategory(Notification.CATEGORY_SERVICE)
             .setContentIntent(abrir)
-            .build()
+        // Sin la espera de 10 s que Android 12+ aplica a las notificaciones de
+        // servicio: quien entra al turno tiene que verlo en el acto.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            b.setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
+        }
+        return b.build()
     }
 
-    fun notificar(ctx: Context, titulo: String, cuerpo: String) {
+    /**
+     * @param detalle el texto desplegado (un dato por renglon); si falta, el
+     *   mismo `cuerpo`.
+     */
+    fun notificar(ctx: Context, titulo: String, cuerpo: String, detalle: String = cuerpo) {
         val nm = ctx.getSystemService(NotificationManager::class.java) ?: return
         val abrir = PendingIntent.getActivity(
             ctx, 1, Intent(ctx, MainActivity::class.java)
@@ -118,7 +130,7 @@ object Aviso {
         else @Suppress("DEPRECATION") Notification.Builder(ctx).setPriority(Notification.PRIORITY_HIGH)
         b.setContentTitle(titulo)
             .setContentText(cuerpo)
-            .setStyle(Notification.BigTextStyle().bigText(cuerpo))
+            .setStyle(Notification.BigTextStyle().setBigContentTitle(titulo).bigText(detalle))
             .setSmallIcon(R.drawable.ic_noti)
             .setAutoCancel(true)
             .setContentIntent(abrir)
@@ -177,12 +189,13 @@ object Aviso {
         }
     }
 
-    private const val GRIS = "#9E9E9E"
-    private const val GRIS_CLARO = "#C7C7C7"
-    private const val AMBAR = "#FBBF24"
-
     /**
      * El cartel con la decision.
+     *
+     * Superficie INVERTIDA respecto al sistema (negra en modo claro, blanca en
+     * oscuro): es lo unico de la app que pide atencion, y se dice con
+     * contraste, no con color. Lo que decide un si o un no (a cuanto y a
+     * donde) va arriba y en grande.
      *
      * @return false si no se pudo dibujar (falta el permiso de superposicion).
      *   Quien llama tiene que enterarse: fallar en silencio aqui deja a alguien
@@ -196,100 +209,124 @@ object Aviso {
             runCatching {
                 quitar(ctx)
                 val wm = ctx.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                val q = Ui.invertida(ctx)
+                fun dp(v: Int) = Ui.dp(ctx, v)
 
-                fun linea(t: String, sp: Float, color: Int, arriba: Int, negrita: Boolean = false) =
-                    TextView(ctx).apply {
-                        text = t
-                        setTextColor(color)
-                        setTextSize(TypedValue.COMPLEX_UNIT_SP, sp)
-                        setPadding(0, arriba, 0, 0)
-                        if (negrita) typeface = android.graphics.Typeface.DEFAULT_BOLD
+                fun linea(texto: String, sp: Float, color: Int, arriba: Int, medio: Boolean = false) =
+                    Ui.texto(ctx, texto, sp, color, medio).apply {
+                        layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(arriba) }
                     }
 
-                fun boton(t: String, relleno: Boolean, alTocar: () -> Unit) = TextView(ctx).apply {
-                    text = t
-                    gravity = Gravity.CENTER
-                    typeface = android.graphics.Typeface.DEFAULT_BOLD
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
-                    setTextColor(if (relleno) Color.BLACK else Color.WHITE)
-                    setPadding(0, 40, 0, 40)
-                    background = GradientDrawable().apply {
-                        setColor(if (relleno) Color.WHITE else Color.TRANSPARENT)
-                        setStroke(3, if (relleno) Color.WHITE else Color.parseColor("#4A4A4A"))
-                        cornerRadius = 999f
+                // Lo que se lee puede crecer con la letra grande del movil: va
+                // en un scroll y los botones quedan siempre a la vista.
+                val contenido = LinearLayout(ctx).apply {
+                    orientation = LinearLayout.VERTICAL
+                    addView(Ui.etiqueta(ctx, ctx.getString(R.string.cartel_encabezado), q.texto2))
+                    addView(linea(o.clave, Ui.Sp.TITULO_GRANDE, q.texto, 4, medio = true))
+                    // La distancia es lo que decide un si o un no, asi que va
+                    // arriba y en grande, no escondida en el detalle.
+                    Reparto.lineaDistancia(o, ultimaLat, ultimaLng, unidad, t)?.let {
+                        addView(linea(it, Ui.Sp.TITULO, q.texto, 8, medio = true))
                     }
-                    isClickable = true
-                    setOnClickListener { alTocar() }
+
+                    addView(Ui.separador(ctx, q).apply {
+                        (layoutParams as LinearLayout.LayoutParams).topMargin = dp(16)
+                    })
+                    addView(Ui.etiqueta(ctx, ctx.getString(R.string.cartel_entrega), q.texto2).apply {
+                        layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16) }
+                    })
+                    addView(linea(o.direccion.ifBlank { t.sinDireccion }, Ui.Sp.TITULO, q.texto, 4, medio = true))
+                    if (o.cliente.isNotBlank()) {
+                        addView(linea(o.cliente, Ui.Sp.CUERPO, q.texto2, 4))
+                    }
+
+                    val detalle = Reparto.detalle(o, t)
+                    if (detalle.isNotEmpty()) {
+                        addView(LinearLayout(ctx).apply {
+                            orientation = LinearLayout.VERTICAL
+                            background = Ui.forma(ctx, q.superficie, 12f)
+                            setPadding(dp(16), dp(12), dp(16), dp(12))
+                            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16) }
+                            detalle.forEachIndexed { i, d ->
+                                val sangrada = d.startsWith(" ")
+                                addView(
+                                    linea(
+                                        d.trim(),
+                                        if (sangrada) Ui.Sp.SECUNDARIO else Ui.Sp.CUERPO,
+                                        if (sangrada) q.texto2 else q.texto,
+                                        if (i == 0) 0 else if (sangrada) 4 else 6,
+                                    )
+                                )
+                            }
+                        })
+                    }
+                    // El cobro sale de la regla de siempre (Reparto.lineaCobro),
+                    // con los datos reales del pedido. Los de la tienda web
+                    // llegan pagados ("no cobres nada"); los de WhatsApp o el
+                    // agente pueden ser contra entrega y traen `cobrar`. Ese es
+                    // el dato que cuesta dinero si se pasa por alto, asi que se
+                    // destaca invirtiendo el bloque, con el importe grande y en
+                    // negrita. Sin color.
+                    if (o.pagadoOnline) {
+                        addView(linea(Reparto.lineaCobro(o, t), Ui.Sp.CUERPO, q.texto, 16, medio = true))
+                    } else {
+                        addView(LinearLayout(ctx).apply {
+                            orientation = LinearLayout.VERTICAL
+                            background = Ui.forma(ctx, q.texto, 12f)
+                            setPadding(dp(16), dp(12), dp(16), dp(14))
+                            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16) }
+                            addView(Ui.texto(ctx, Reparto.dinero(o.cobrar, o.moneda),
+                                Ui.Sp.TITULO_GRANDE, q.fondo).apply { typeface = Ui.NEGRITA })
+                            addView(linea(Reparto.lineaCobro(o, t), Ui.Sp.CUERPO, q.fondo, 2, medio = true))
+                        })
+                    }
                 }
 
                 val tarjeta = LinearLayout(ctx).apply {
                     orientation = LinearLayout.VERTICAL
-                    background = GradientDrawable().apply {
-                        setColor(Color.BLACK)
-                        setStroke(4, Color.WHITE)
-                        cornerRadius = 34f
-                    }
-                    setPadding(56, 46, 56, 40)
-
-                    addView(linea(ctx.getString(R.string.cartel_encabezado), 12f, Color.parseColor(GRIS), 0).apply {
-                        letterSpacing = 0.18f
-                    })
-                    addView(linea(o.clave, 26f, Color.WHITE, 8, negrita = true))
-                    // La distancia es lo que decide un si o un no, asi que va
-                    // arriba y en grande, no escondida en el detalle.
-                    Reparto.lineaDistancia(o, ultimaLat, ultimaLng, unidad, t)?.let {
-                        addView(linea(it, 19f, Color.WHITE, 10, negrita = true))
-                    }
-                    addView(linea(o.direccion.ifBlank { t.sinDireccion }, 15f, Color.parseColor(GRIS_CLARO), 8))
-                    if (o.cliente.isNotBlank()) {
-                        addView(linea(o.cliente, 14f, Color.parseColor(GRIS), 4))
-                    }
-
-                    addView(View(ctx).apply {
-                        setBackgroundColor(Color.parseColor("#3A3A3A"))
-                        layoutParams = LinearLayout.LayoutParams(-1, 2).apply { topMargin = 22 }
-                    })
-                    Reparto.detalle(o, t).forEachIndexed { i, d ->
-                        val sangrada = d.startsWith(" ")
-                        addView(
-                            linea(
-                                d.trim(),
-                                if (sangrada) 13f else 16f,
-                                if (sangrada) Color.parseColor(GRIS) else Color.WHITE,
-                                if (i == 0) 20 else if (sangrada) 2 else 10,
-                                negrita = !sangrada,
-                            )
-                        )
-                    }
-                    addView(
-                        linea(
-                            Reparto.lineaCobro(o, t), 15f,
-                            if (o.pagadoOnline) Color.parseColor("#34D399") else Color.parseColor(AMBAR),
-                            22, negrita = true,
-                        )
-                    )
-
+                    background = Ui.forma(ctx, q.fondo, 20f, borde = q.linea, bordeDp = 1f)
+                    elevation = dp(12).toFloat()
+                    setPadding(dp(24), dp(24), dp(24), dp(20))
+                    // Peso 1 con alto "lo que ocupe": si no cabe, el scroll
+                    // encoge y los botones no se salen de la pantalla.
+                    addView(ScrollView(ctx).apply {
+                        isVerticalScrollBarEnabled = false
+                        addView(contenido)
+                    }, LinearLayout.LayoutParams(-1, -2, 1f))
                     addView(LinearLayout(ctx).apply {
                         orientation = LinearLayout.HORIZONTAL
-                        layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = 34 }
                         addView(
-                            boton(ctx.getString(R.string.cartel_rechazar), false) { decidir(ctx, o, "rechazar", alDecidir) },
-                            LinearLayout.LayoutParams(0, -2, 1f).apply { rightMargin = 16 },
+                            Ui.boton(ctx, q, ctx.getString(R.string.cartel_rechazar), Ui.Tipo.SECUNDARIO) {
+                                decidir(ctx, o, "rechazar", alDecidir)
+                            },
+                            LinearLayout.LayoutParams(0, -2, 1f).apply { marginEnd = dp(12) },
                         )
                         addView(
-                            boton(ctx.getString(R.string.cartel_aceptar), true) { decidir(ctx, o, "tomar", alDecidir) },
+                            Ui.boton(ctx, q, ctx.getString(R.string.cartel_aceptar), Ui.Tipo.PRIMARIO) {
+                                decidir(ctx, o, "tomar", alDecidir)
+                            },
                             LinearLayout.LayoutParams(0, -2, 1.2f),
                         )
-                    })
+                    }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(20) })
                 }
 
                 // Marco a pantalla completa PERO sin cerrar al tocar fuera: este
                 // cartel pide una decision, y descartarlo con el pulgar sin
                 // querer deja el pedido esperando sin que nadie lo sepa.
+                val m = dp(16)
                 val marco = FrameLayout(ctx).apply {
-                    setPadding(44, 0, 44, 0)
+                    setPadding(m, m * 2, m, m * 2)
                     addView(tarjeta, FrameLayout.LayoutParams(-1, -2, Gravity.CENTER))
                     isClickable = true
+                    // La tarjeta no se mete debajo de la barra de estado ni de
+                    // la de navegacion.
+                    ViewCompat.setOnApplyWindowInsetsListener(this) { v, ins ->
+                        val b = ins.getInsets(
+                            WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+                        )
+                        v.setPadding(m + b.left, m + b.top, m + b.right, m + b.bottom)
+                        WindowInsetsCompat.CONSUMED
+                    }
                 }
 
                 val tipo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)

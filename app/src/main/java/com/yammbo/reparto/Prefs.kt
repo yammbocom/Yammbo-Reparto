@@ -27,6 +27,17 @@ class Prefs(ctx: Context) {
         get() = p.getBoolean("encima", true)
         set(v) = p.edit().putBoolean("encima", v).apply()
 
+    /**
+     * Turno empezado o terminado, por decision de quien reparte.
+     *
+     * Por defecto ENCENDIDO: quien actualiza desde una version sin este
+     * interruptor tiene que seguir trabajando igual que ayer, sin descubrir
+     * que ahora hay que "empezar" algo.
+     */
+    var turnoActivo: Boolean
+        get() = p.getBoolean("turno_activo", true)
+        set(v) = p.edit().putBoolean("turno_activo", v).apply()
+
     // https y no http: el manifest lleva usesCleartextTraffic=false, asi que
     // una URL en claro fallaria siempre sin decir por que.
     val configurada: Boolean get() = url.startsWith("https://") && url.contains("/repartidor/")

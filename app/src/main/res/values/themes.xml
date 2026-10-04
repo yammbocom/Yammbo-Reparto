@@ -1,9 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Negro fijo, igual que la pantalla web: esto se usa en la calle, de
-         noche, y una pantalla blanca a oscuras ciega antes de leer nada. -->
-    <style name="Tema.Yammbo" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:windowBackground">@android:color/black</item>
-        <item name="android:statusBarColor">@android:color/black</item>
+    <!-- Sigue el modo claro/oscuro del sistema. Las pantallas se pintan por
+         codigo con Ui.kt; aqui solo va lo que el sistema dibuja antes de que
+         exista la pantalla (el fondo de la ventana) y lo que tiñen los widgets
+         de AppCompat (cursor, seleccion, dialogos): todo neutro, sin acento de
+         color. -->
+    <style name="Tema.Yammbo" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/y_fondo</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="colorPrimary">@color/y_texto</item>
+        <item name="colorPrimaryDark">@color/y_fondo</item>
+        <item name="colorAccent">@color/y_texto</item>
+        <item name="colorControlActivated">@color/y_texto</item>
+        <item name="colorControlNormal">@color/y_texto2</item>
+        <item name="android:textColorPrimary">@color/y_texto</item>
+        <item name="android:textColorSecondary">@color/y_texto2</item>
     </style>
 </resources>

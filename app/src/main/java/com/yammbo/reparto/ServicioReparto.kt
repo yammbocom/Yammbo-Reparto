@@ -1,6 +1,7 @@
 package com.yammbo.reparto
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -23,6 +24,8 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * El turno: mantiene la ubicacion publicada y avisa de los pedidos.
@@ -44,6 +47,18 @@ class ServicioReparto : Service(), LocationListener {
     private var bucle: Job? = null
     private var wake: PowerManager.WakeLock? = null
 
+    /**
+     * Falso desde que empieza onDestroy. Una vuelta del bucle que estaba
+     * esperando a la red cuando se termino el turno no puede volver a pintar
+     * la notificacion (quedaria una "Turno activo" huerfana) ni anunciar un
+     * pedido a quien ya se fue a casa.
+     */
+    @Volatile private var vivo = true
+    private val cerrojo = Any()
+
+    /** Que ningun POST de posicion quede por detras del DELETE final. */
+    private val retirada = Retirada()
+
     private var pos: Location? = null
     private var ultimoEnvio = 0L
     private var ultimoPunto: Location? = null
@@ -63,6 +78,11 @@ class ServicioReparto : Service(), LocationListener {
             startForeground(1, Aviso.notificacionServicio(this, getString(R.string.estado_buscando)))
         }.onFailure { Log.w(TAG, "sin primer plano: " + it.message) }.isSuccess
         if (!enPie) { stopSelf(); return }
+        // Un reinicio del sistema (START_STICKY) con el turno terminado no lo
+        // vuelve a empezar: terminar el turno es una decision, no un estado
+        // que se pierde al matar el proceso.
+        if (!Prefs(this).turnoActivo) { stopSelf(); return }
+        Vigia.ponerTurno(Turno.BUSCANDO)
         runCatching {
             val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
             wake = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "yammbo:reparto-svc")
@@ -73,6 +93,9 @@ class ServicioReparto : Service(), LocationListener {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // onCreate pudo pararlo (sin primer plano o con el turno terminado) y
+        // el sistema llama aqui igual: sin esto el bucle volveria a publicar.
+        if (!vivo || !Prefs(this).turnoActivo) return START_NOT_STICKY
         if (bucle?.isActive != true) arrancar()
         return START_STICKY
     }
@@ -90,6 +113,9 @@ class ServicioReparto : Service(), LocationListener {
             ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
 
+    // hayPermiso() ya lo comprueba y cada llamada va en runCatching: lint no
+    // reconoce la comprobacion cuando esta en otra funcion.
+    @SuppressLint("MissingPermission")
     private fun pedirUbicacion() {
         if (!hayPermiso()) { Log.w(TAG, "sin permiso de ubicacion"); return }
         val lm = getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return
@@ -158,14 +184,17 @@ class ServicioReparto : Service(), LocationListener {
         bucle = scope.launch {
             val prefs = Prefs(this@ServicioReparto)
             var espera = PAUSA_MS
-            while (isActive) {
-                if (!prefs.configurada) { estado(getString(R.string.estado_sin_enlace)); delay(5_000); continue }
-                if (!hayPermiso()) { estado(getString(R.string.estado_sin_permiso)); delay(10_000); continue }
+            while (isActive && vivo) {
+                if (!prefs.configurada) { estado(Turno.SIN_ENLACE); delay(5_000); continue }
+                if (!hayPermiso()) { estado(Turno.SIN_PERMISO); delay(10_000); continue }
                 if (!meToca()) { delay(3_000); espera = PAUSA_MS; continue }
 
+                if (!vivo) break
                 publicarPosicion(prefs)
+                if (!vivo) break
 
                 val cuerpo = Api.datos(prefs.urlDatos())
+                if (!vivo) break
                 val d = Reparto.leer(cuerpo)
                 if (d == null) {
                     // Un fetch fallido NO es una lista vacia: no se toca nada y
@@ -174,13 +203,11 @@ class ServicioReparto : Service(), LocationListener {
                 } else {
                     espera = PAUSA_MS
                     prefs.unidad = d.unidad
-                    estado(
-                        when {
-                            !d.disponible -> getString(R.string.estado_no_disponible)
-                            d.mios.isNotEmpty() -> getString(R.string.estado_llevando, d.mios.size)
-                            else -> getString(R.string.estado_disponible)
-                        }
-                    )
+                    when {
+                        !d.disponible -> estado(Turno.NO_DISPONIBLE)
+                        d.mios.isNotEmpty() -> estado(Turno.LLEVANDO, d.mios.size)
+                        else -> estado(Turno.DISPONIBLE)
+                    }
                     val nuevas = Vigia.nuevas(d)
                     if (nuevas.isNotEmpty() && Vigia.debeAvisar(this@ServicioReparto, d)) {
                         anunciar(nuevas.first(), d.unidad)
@@ -205,20 +232,34 @@ class ServicioReparto : Service(), LocationListener {
             Reparto.millas(previo.latitude, previo.longitude, l.latitude, l.longitude) > 0.015
         val toca = (lejos && ahora - ultimoEnvio >= MOVIDO_MS) || ahora - ultimoEnvio >= LATIDO_MS
         if (!toca) return
-        if (Api.posicion(prefs.urlPos(), l.latitude, l.longitude, if (l.hasAccuracy()) l.accuracy else null)) {
+        if (!vivo || !retirada.empezarEnvio()) return
+        val ok = Api.posicion(prefs.urlPos(), l.latitude, l.longitude, if (l.hasAccuracy()) l.accuracy else null)
+        // El turno se cerro mientras el POST viajaba: pudo llegar despues del
+        // DELETE de onDestroy y dejarle "disponible" hasta que el punto caduque.
+        // Se repite el DELETE, que ahora si es lo ultimo que recibe el servidor.
+        if (retirada.terminarEnvio() || !vivo) {
+            runCatching { Api.borrarPosicion(prefs.urlPos()) }
+            return
+        }
+        if (ok) {
             ultimoEnvio = ahora
             ultimoPunto = l
         }
     }
 
     private fun anunciar(o: Oferta, unidad: String) {
+        if (!vivo) return
         val t = Textos.de(this)
-        val txt = listOfNotNull(
+        val lineas = listOfNotNull(
             Reparto.lineaDistancia(o, Aviso.ultimaLat, Aviso.ultimaLng, unidad, t),
             o.direccion.ifBlank { t.sinDireccion },
             Reparto.lineaCobro(o, t),
-        ).joinToString(" · ")
-        Aviso.notificar(this, getString(R.string.aviso_titulo, o.clave), txt)
+        )
+        // Cerrada cabe en una linea; desplegada, un dato por renglon.
+        Aviso.notificar(
+            this, getString(R.string.aviso_titulo, o.clave),
+            lineas.joinToString(" · "), lineas.joinToString("\n"),
+        )
         Aviso.sonar(this)
         Aviso.despertar(this)
         // Si no hay permiso de superposicion, el cartel no sale. La
@@ -229,22 +270,56 @@ class ServicioReparto : Service(), LocationListener {
         }
     }
 
-    private fun estado(texto: String) {
-        runCatching {
-            val nm = getSystemService(android.app.NotificationManager::class.java)
-            nm?.notify(1, Aviso.notificacionServicio(this, texto))
+    /**
+     * El mismo estado a la notificacion permanente y a la pantalla. Los textos
+     * son los de siempre: la notificacion tiene que decir la verdad sobre el GPS.
+     */
+    private fun estado(t: Turno, n: Int = 0) {
+        val texto = when (t) {
+            Turno.SIN_ENLACE -> getString(R.string.estado_sin_enlace)
+            Turno.SIN_PERMISO -> getString(R.string.estado_sin_permiso)
+            Turno.NO_DISPONIBLE -> getString(R.string.estado_no_disponible)
+            Turno.LLEVANDO -> getString(R.string.estado_llevando, n)
+            Turno.DISPONIBLE -> getString(R.string.estado_disponible)
+            Turno.BUSCANDO, Turno.APAGADO -> getString(R.string.estado_buscando)
+        }
+        synchronized(cerrojo) {
+            if (!vivo) return
+            Vigia.ponerTurno(t, n)
+            runCatching {
+                val nm = getSystemService(android.app.NotificationManager::class.java)
+                nm?.notify(1, Aviso.notificacionServicio(this, texto))
+            }
         }
     }
 
     override fun onDestroy() {
+        synchronized(cerrojo) {
+            vivo = false
+            retirada.cerrar()
+            // La del servicio se va sola al pararlo; esto cubre una que se
+            // hubiera repintado justo antes.
+            runCatching { getSystemService(android.app.NotificationManager::class.java)?.cancel(1) }
+        }
         runCatching {
             (getSystemService(Context.LOCATION_SERVICE) as? LocationManager)?.removeUpdates(this)
         }
         runCatching { wake?.release() }
+        Vigia.ponerTurno(Turno.APAGADO)
         // Al cerrar el turno se retira el punto: dejar de tener la app abierta
-        // tiene que dejar de publicar donde esta uno.
+        // tiene que dejar de publicar donde esta uno. El DELETE sale cuando el
+        // bucle ya ha parado (un POST en vuelo no se interrumpe al cancelar),
+        // con un tope por si la red se queda colgada; y si aun asi un POST
+        // acaba despues, publicarPosicion repite el DELETE.
         val prefs = Prefs(this)
-        if (prefs.configurada) Thread { runCatching { Api.borrarPosicion(prefs.urlPos()) } }.start()
+        val ultimo = bucle
+        bucle?.cancel()
+        if (prefs.configurada) {
+            Thread {
+                runCatching { runBlocking { withTimeoutOrNull(ESPERA_BUCLE_MS) { ultimo?.join() } } }
+                runCatching { Api.borrarPosicion(prefs.urlPos()) }
+            }.start()
+        }
         scope.cancel()
         super.onDestroy()
     }
@@ -259,9 +334,15 @@ class ServicioReparto : Service(), LocationListener {
         private const val MOVIDO_MS = 15_000L
         /** Latido: como mucho este hueco sin publicar nada. */
         private const val LATIDO_MS = 45_000L
+        /** Lo que tarda como mucho un POST colgado (8 s conectar + 8 s leer). */
+        private const val ESPERA_BUCLE_MS = 20_000L
 
-        /** Sin permiso de ubicacion ni se intenta: ver el comentario de onCreate. */
+        /**
+         * Sin permiso de ubicacion ni se intenta: ver el comentario de onCreate.
+         * Con el turno terminado, tampoco: solo [empezarTurno] lo vuelve a abrir.
+         */
         fun arrancar(ctx: Context) {
+            if (!Prefs(ctx).turnoActivo) { Log.i(TAG, "turno terminado: no se arranca"); return }
             val hayPermiso =
                 ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) ==
                     PackageManager.PERMISSION_GRANTED ||
@@ -277,6 +358,23 @@ class ServicioReparto : Service(), LocationListener {
 
         fun parar(ctx: Context) {
             runCatching { ctx.stopService(Intent(ctx, ServicioReparto::class.java)) }
+        }
+
+        /** El boton "Empezar turno": guarda la decision y arranca como siempre. */
+        fun empezarTurno(ctx: Context) {
+            val prefs = Prefs(ctx)
+            prefs.turnoActivo = true
+            if (Jornada.debeArrancar(prefs.configurada, true)) arrancar(ctx)
+        }
+
+        /**
+         * El boton "Terminar turno": para el servicio, y con el el latido, el
+         * GPS y el cartel. onDestroy retira el punto del servidor, asi que se
+         * deja de constar como disponible en el acto.
+         */
+        fun terminarTurno(ctx: Context) {
+            Prefs(ctx).turnoActivo = false
+            parar(ctx)
         }
     }
 }

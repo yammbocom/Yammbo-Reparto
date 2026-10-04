@@ -3,6 +3,33 @@ package com.yammbo.reparto
 import android.content.Context
 
 /**
+ * En que esta el turno, tal y como lo ve el servicio. Lo mismo que dice la
+ * notificacion permanente, pero sin texto: la pantalla lo pinta a su manera.
+ */
+enum class Turno { APAGADO, BUSCANDO, SIN_ENLACE, SIN_PERMISO, NO_DISPONIBLE, DISPONIBLE, LLEVANDO }
+
+/**
+ * Lo que se decide con el interruptor de turno, sin Android: se prueba en la JVM.
+ */
+object Jornada {
+
+    /** El servicio solo arranca con enlace y con el turno empezado. */
+    fun debeArrancar(configurada: Boolean, turnoActivo: Boolean): Boolean =
+        configurada && turnoActivo
+
+    /**
+     * El estado que se ensena. Con el turno terminado es "fuera de turno"
+     * aunque el servicio aun no haya publicado su parada: decir "Disponible"
+     * un segundo despues de terminar seria mentir justo en lo que importa.
+     */
+    fun visible(servicio: Turno, turnoActivo: Boolean): Turno =
+        if (!turnoActivo) Turno.APAGADO else servicio
+
+    /** Relleno = en marcha y recibiendo; contorno = todo lo demas. */
+    fun lleno(t: Turno): Boolean = t == Turno.DISPONIBLE || t == Turno.LLEVANDO
+}
+
+/**
  * Decide cuando salta el cartel.
  *
  * El estado vive en un `object` porque lo comparten el servicio y la pantalla:
@@ -13,6 +40,25 @@ object Vigia {
 
     /** La pantalla esta delante: no hace falta cartel, ya lo esta viendo. */
     @Volatile var enPrimerPlano: Boolean = false
+
+    /** El ultimo estado que publico el servicio, y cuantos pedidos lleva. */
+    @Volatile var turno: Turno = Turno.APAGADO
+        private set
+    @Volatile var llevando: Int = 0
+        private set
+
+    /**
+     * Quien quiere enterarse de los cambios (la pantalla que este delante).
+     * Se llama desde el hilo del servicio: quien escucha salta al principal.
+     */
+    @Volatile var alCambiarTurno: (() -> Unit)? = null
+
+    fun ponerTurno(t: Turno, n: Int = 0) {
+        val cambio = t != turno || n != llevando
+        turno = t
+        llevando = n
+        if (cambio) alCambiarTurno?.invoke()
+    }
 
     /** Ultima vez que ALGUIEN (pantalla o servicio) trajo datos. */
     @Volatile private var ultimoDato: Long = 0L

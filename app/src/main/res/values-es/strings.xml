@@ -9,19 +9,42 @@
     <string name="canal_ofertas_desc">Un pedido esperando a que alguien lo lleve</string>
     <string name="canal_servicio">En turno</string>
     <string name="canal_servicio_desc">Mientras estás disponible para repartir</string>
+    <string name="noti_turno_activo">Turno activo</string>
 
-    <string name="puerta_ubicacion_titulo">Activa tu ubicación</string>
-    <string name="puerta_ubicacion_permiso">Sin ella no apareces como disponible y no te llegan
-        pedidos. Es lo único que la app necesita para funcionar.</string>
+    <string name="paso_n_de">Paso %1$d de %2$d</string>
+    <string name="reintentar">Reintentar</string>
+
+    <string name="bienvenida_titulo">Conecta tu teléfono</string>
+    <string name="bienvenida_texto">Recibe los pedidos de reparto de tu local y acéptalos con un
+        toque, aunque estés en otra app.</string>
+    <string name="emparejar_ayuda">Pega el enlace de reparto que te mandó el encargado. Lo saca del
+        panel, en Reparto. Ese enlace es tu llave: no hace falta contraseña.</string>
+    <string name="emparejar_boton">Conectar</string>
+    <string name="emparejar_comprobando">Comprobando…</string>
+    <string name="emparejar_vacio">Pega primero tu enlace de reparto.</string>
+    <string name="emparejar_no_vale">Este enlace no funciona. Puede que lo hayan cambiado: pide uno
+        nuevo al encargado.</string>
+    <string name="emparejar_sin_red">Sin conexión a internet. Revisa los datos o el wifi y vuelve a
+        intentarlo.</string>
+    <string name="error_servidor">El servidor no respondió (%1$d). Vuelve a intentarlo en un
+        momento.</string>
+
+    <string name="puerta_ubicacion_titulo">Comparte tu ubicación durante el turno</string>
+    <string name="puerta_ubicacion_permiso">Yammbo Delivery usa tu ubicación para mostrarte como
+        disponible y asignarte pedidos cercanos. Solo se comparte mientras el turno está activo,
+        también con la pantalla apagada. El cliente solo ve tu posición mientras llevas su
+        pedido. Puedes terminar el turno cuando quieras.</string>
+    <string name="puerta_ubicacion_notis">También se te pedirá permiso para las notificaciones,
+        para que te lleguen los pedidos nuevos.</string>
     <string name="puerta_ubicacion_apagada">El permiso está concedido, pero la ubicación del móvil
         está apagada. Enciéndela para volver a estar disponible.</string>
-    <string name="puerta_ubicacion_boton">Dar permiso</string>
+    <string name="puerta_ubicacion_boton">Permitir ubicación</string>
     <string name="puerta_ubicacion_ajustes">Abrir ajustes de ubicación</string>
 
-    <string name="puerta_cartel_titulo">Permite el cartel</string>
-    <string name="puerta_cartel_texto">Un pedido nuevo tiene que llegarte mientras miras el mapa o
-        cualquier otra app. Sin este permiso no hay cartel ni botón de aceptar, solo una
-        notificación que se puede pasar por alto.</string>
+    <string name="puerta_cartel_titulo">Muestra los pedidos encima de otras apps</string>
+    <string name="puerta_cartel_texto">Un pedido nuevo tiene que llegarte aunque estés en el mapa o
+        en otra app. Sin esto solo te llega una notificación, y es fácil pasarla por alto.</string>
+    <string name="puerta_cartel_pista">En la lista, busca Yammbo Delivery y actívalo.</string>
     <string name="puerta_cartel_boton">Permitir mostrar encima</string>
 
     <string name="estado_buscando">Buscando tu ubicación…</string>
@@ -31,7 +54,33 @@
     <string name="estado_disponible">Disponible</string>
     <string name="estado_llevando">Llevando %1$d</string>
 
-    <string name="cartel_encabezado">PEDIDO PARA REPARTIR</string>
+    <string name="chip_no_disponible">No disponible</string>
+    <string name="chip_buscando">Buscando</string>
+    <string name="chip_apagado">Fuera de turno</string>
+    <string name="chip_sin_enlace">Sin enlace</string>
+    <string name="chip_sin_permiso">Sin ubicación</string>
+    <string name="cab_disponible">Te llegan los pedidos cercanos</string>
+    <string name="cab_no_disponible">Activa la ubicación del móvil</string>
+    <string name="cab_apagado">El turno no está en marcha</string>
+    <string name="cab_fuera">Empieza el turno para recibir pedidos</string>
+
+    <string name="turno_empezar">Empezar turno</string>
+    <string name="turno_terminar">Terminar turno</string>
+    <string name="turno_confirmar_titulo">¿Terminar el turno?</string>
+    <string name="turno_confirmar_texto">Dejarás de aparecer como disponible y de recibir pedidos.
+        Tu ubicación deja de compartirse.</string>
+    <string name="turno_cancelar">Seguir trabajando</string>
+
+    <string name="web_sin_red_texto">Tus pedidos vuelven a cargarse en cuanto tengas
+        internet.</string>
+    <string name="web_enlace_titulo">Este enlace ya no funciona</string>
+    <string name="web_enlace_texto">Puede que el encargado lo haya cambiado. Pide el nuevo y pégalo
+        en Ajustes.</string>
+    <string name="web_cambiar_enlace">Cambiar enlace</string>
+    <string name="web_error_titulo">No se pudieron cargar tus pedidos</string>
+
+    <string name="cartel_encabezado">Pedido para repartir</string>
+    <string name="cartel_entrega">Entrega</string>
     <string name="cartel_aceptar">Aceptar</string>
     <string name="cartel_rechazar">Rechazar</string>
     <string name="aviso_titulo">Pedido para repartir %1$s</string>
@@ -46,25 +95,39 @@
     <string name="dist_y_mas">y %1$d más</string>
     <string name="sin_direccion">Sin dirección</string>
 
+    <string name="aj_listo">Listo</string>
+    <string name="aj_turno">Turno</string>
+    <string name="aj_estado">Estado</string>
     <string name="aj_enlace">Enlace de reparto</string>
     <string name="aj_enlace_nota">Te lo da el encargado desde el panel, en Reparto. Ese enlace ES
         tu llave: no pide contraseña y solo ve los pedidos de tu local.</string>
     <string name="aj_avisos">Avisos</string>
     <string name="aj_sonido">Sonido de alarma al entrar un pedido</string>
     <string name="aj_encima">Cartel encima de otras apps</string>
+    <string name="aj_encima_sub">La tarjeta del pedido con Aceptar y Rechazar</string>
     <string name="aj_encima_ok">Permiso concedido: el cartel puede salir sobre cualquier app.</string>
     <string name="aj_encima_no">SIN permiso. Sin él llega la notificación, pero no el cartel con
         Aceptar y Rechazar.</string>
-    <string name="aj_encima_dar">Dar permiso para el cartel</string>
     <string name="aj_probar">Probar el aviso</string>
+    <string name="aj_probar_sub">Muestra un pedido de ejemplo</string>
     <string name="aj_ubicacion">Ubicación</string>
-    <string name="aj_ubicacion_nota">Obligatoria. Se comparte mientras tienes la app abierta y es
-        lo que te mantiene disponible: si se apaga, dejas de recibir pedidos. Tus clientes solo ven
-        tu punto mientras llevas SU pedido, y nunca tu teléfono.</string>
-    <string name="aj_version">Versión</string>
-    <string name="aj_instalada">Instalada: %1$s (%2$d)</string>
+    <string name="aj_ubicacion_nota">Obligatoria. Se comparte durante el turno y es lo que te
+        mantiene disponible: si se apaga, dejas de recibir pedidos. Tus clientes solo ven tu punto
+        mientras llevas SU pedido, y nunca tu teléfono.</string>
+    <string name="aj_permisos">Permisos</string>
+    <string name="perm_gps">Ubicación del móvil</string>
+    <string name="perm_notis">Notificaciones</string>
+    <string name="perm_ok">Permitido</string>
+    <string name="perm_falta">Sin permiso</string>
+    <string name="perm_gps_on">Encendida</string>
+    <string name="perm_gps_off">Apagada</string>
+    <string name="perm_arreglar">Arreglar</string>
+    <string name="aj_app">Aplicación</string>
+    <string name="aj_acerca">Acerca de</string>
+    <string name="aj_acerca_sub">Reparto para el personal de tu local, de Yammbo.</string>
+    <string name="aj_instalada">Versión %1$s (%2$d)</string>
     <string name="aj_buscar">Buscar actualización</string>
-    <string name="aj_guardar">Guardar</string>
+    <string name="aj_guardar">Guardar enlace</string>
     <string name="aj_guardado">Guardado</string>
     <string name="aj_enlace_malo">Ese no es un enlace de reparto. Tiene que empezar por https:// y
         llevar /repartidor/</string>

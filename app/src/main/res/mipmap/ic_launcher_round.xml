@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- El glifo de la app (Delivery b: un pin con su ruta), solo y en blanco.
-     Sirve de icono de la barra de estado, donde Android pinta la SILUETA y
-     cuenta solo el alfa, y de logo dentro de la app, teñido por codigo.
-     El lienzo recorta el de 108 del icono al hueco que ocupa el glifo, para
-     que llene los 24dp de la barra de estado. -->
+<!-- Respaldo para Android 7 (sin iconos adaptativos): circulo negra con el glifo. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp" android:height="24dp"
-    android:viewportWidth="68" android:viewportHeight="68">
-    <group android:translateX="-18.15" android:translateY="-21.5">
+    android:width="48dp" android:height="48dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#000000" android:pathData="M4,54a50,50 0,1 0,100 0a50,50 0,1 0,-100 0z" />
+    <group android:scaleX="0.80" android:scaleY="0.80"
+        android:pivotX="54" android:pivotY="54">
         <!-- El pin con su hueco recortado (evenOdd: es un agujero de verdad, no un
              circulo negro encima, asi funciona sobre cualquier fondo y en la capa
              monocroma) y la ruta de puntos que llega hasta el. -->

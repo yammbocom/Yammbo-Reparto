@@ -7,9 +7,12 @@
   La pantalla web que va dentro tambien es bilingue y se decide con la cabecera
   Accept-Language, que sale de la misma configuracion del movil: asi la app y su
   contenido nunca hablan idiomas distintos.
+
+  Textos cortos y llanos. Sin emojis ni flechas.
 -->
 <resources>
-    <string name="app_name">Yammbo Delivery</string>
+    <!-- La marca no se traduce. -->
+    <string name="app_name" translatable="false">Yammbo Delivery</string>
     <string name="ajustes">Settings</string>
     <string name="ajustes_app">Yammbo Delivery · Settings</string>
 
@@ -18,23 +21,46 @@
     <string name="canal_ofertas_desc">An order waiting for someone to take it</string>
     <string name="canal_servicio">On shift</string>
     <string name="canal_servicio_desc">While you are available to deliver</string>
+    <string name="noti_turno_activo">Shift on</string>
 
-    <!-- Puerta de entrada -->
-    <string name="puerta_ubicacion_titulo">Turn on your location</string>
-    <string name="puerta_ubicacion_permiso">Without it you don\'t show up as available and no
-        orders reach you. It is the one thing this app needs to work.</string>
+    <!-- Pasos de entrada -->
+    <string name="paso_n_de">Step %1$d of %2$d</string>
+    <string name="reintentar">Try again</string>
+
+    <string name="bienvenida_titulo">Connect your phone</string>
+    <string name="bienvenida_texto">Get your restaurant\'s delivery orders and accept them with one
+        tap, even from another app.</string>
+    <string name="emparejar_ayuda">Paste the delivery link your manager sent you. They get it from
+        the panel, under Delivery. That link is your key: no password needed.</string>
+    <string name="emparejar_boton">Connect</string>
+    <string name="emparejar_comprobando">Checking…</string>
+    <string name="emparejar_vacio">Paste your delivery link first.</string>
+    <string name="emparejar_no_vale">This link does not work. It may have been replaced: ask your
+        manager for a new one.</string>
+    <string name="emparejar_sin_red">No internet connection. Check your data or wifi and try
+        again.</string>
+    <string name="error_servidor">The server did not answer (%1$d). Try again in a moment.</string>
+
+    <!-- Lo que leen tambien los revisores de la declaracion de ubicacion de Play. -->
+    <string name="puerta_ubicacion_titulo">Share your location during your shift</string>
+    <string name="puerta_ubicacion_permiso">Yammbo Delivery uses your location to show you as
+        available and to assign you nearby orders. It is shared only while your shift is on,
+        also with the screen off. Customers see your position only while you carry their
+        order. You can end your shift at any time.</string>
+    <string name="puerta_ubicacion_notis">You will also be asked to allow notifications, so new
+        orders reach you.</string>
     <string name="puerta_ubicacion_apagada">The permission is granted, but your phone\'s location
         is switched off. Turn it on to be available again.</string>
-    <string name="puerta_ubicacion_boton">Grant permission</string>
+    <string name="puerta_ubicacion_boton">Allow location</string>
     <string name="puerta_ubicacion_ajustes">Open location settings</string>
 
-    <string name="puerta_cartel_titulo">Allow the order card</string>
-    <string name="puerta_cartel_texto">A new order has to reach you while you are looking at the
-        map or at another app. Without this permission there is no card and no Accept button —
-        just a notification you can miss.</string>
-    <string name="puerta_cartel_boton">Allow it to show on top</string>
+    <string name="puerta_cartel_titulo">Show orders over other apps</string>
+    <string name="puerta_cartel_texto">A new order has to reach you while you look at the map or
+        another app. Without this you only get a notification, and it is easy to miss.</string>
+    <string name="puerta_cartel_pista">In the list, find Yammbo Delivery and turn it on.</string>
+    <string name="puerta_cartel_boton">Allow display over apps</string>
 
-    <!-- Estado del servicio -->
+    <!-- Estado del servicio (notificacion permanente) -->
     <string name="estado_buscando">Finding your location…</string>
     <string name="estado_sin_enlace">Delivery link missing</string>
     <string name="estado_sin_permiso">No location permission</string>
@@ -42,8 +68,37 @@
     <string name="estado_disponible">Available</string>
     <string name="estado_llevando">Carrying %1$d</string>
 
+    <!-- Cabecera de la pantalla principal -->
+    <string name="chip_no_disponible">Not available</string>
+    <string name="chip_buscando">Locating</string>
+    <string name="chip_apagado">Off shift</string>
+    <string name="chip_sin_enlace">No link</string>
+    <string name="chip_sin_permiso">No location</string>
+    <string name="cab_disponible">Nearby orders reach you</string>
+    <string name="cab_no_disponible">Turn on your phone\'s location</string>
+    <string name="cab_apagado">The shift is not running</string>
+    <string name="cab_fuera">Start your shift to receive orders</string>
+
+    <!-- Empezar / terminar turno -->
+    <string name="turno_empezar">Start shift</string>
+    <string name="turno_terminar">End shift</string>
+    <string name="turno_confirmar_titulo">End your shift?</string>
+    <string name="turno_confirmar_texto">You will stop showing as available and stop receiving
+        orders. Your location stops being shared.</string>
+    <string name="turno_cancelar">Keep working</string>
+
+    <!-- Errores de la pantalla web -->
+    <string name="web_sin_red_texto">Your orders will load again as soon as you have
+        internet.</string>
+    <string name="web_enlace_titulo">This link no longer works</string>
+    <string name="web_enlace_texto">Your manager may have replaced it. Ask for the new one and
+        paste it in Settings.</string>
+    <string name="web_cambiar_enlace">Change link</string>
+    <string name="web_error_titulo">Could not load your orders</string>
+
     <!-- El cartel -->
-    <string name="cartel_encabezado">ORDER TO DELIVER</string>
+    <string name="cartel_encabezado">Order to deliver</string>
+    <string name="cartel_entrega">Drop-off</string>
     <string name="cartel_aceptar">Accept</string>
     <string name="cartel_rechazar">Decline</string>
     <string name="aviso_titulo">Order to deliver %1$s</string>
@@ -60,6 +115,9 @@
     <string name="sin_direccion">No address</string>
 
     <!-- Ajustes -->
+    <string name="aj_listo">Done</string>
+    <string name="aj_turno">Shift</string>
+    <string name="aj_estado">Status</string>
     <string name="aj_enlace">Delivery link</string>
     <string name="aj_enlace_nota">Your manager gives it to you from the panel, under Delivery.
         That link IS your key: it asks for no password and only shows your restaurant\'s
@@ -67,19 +125,30 @@
     <string name="aj_avisos">Alerts</string>
     <string name="aj_sonido">Alarm sound when an order comes in</string>
     <string name="aj_encima">Card on top of other apps</string>
+    <string name="aj_encima_sub">The order card with Accept and Decline</string>
     <string name="aj_encima_ok">Permission granted: the card can show over any app.</string>
     <string name="aj_encima_no">NOT granted. Without it a notification arrives, but not the card
         with Accept and Decline.</string>
-    <string name="aj_encima_dar">Grant permission for the card</string>
     <string name="aj_probar">Test the alert</string>
+    <string name="aj_probar_sub">Shows a sample order</string>
     <string name="aj_ubicacion">Location</string>
-    <string name="aj_ubicacion_nota">Required. It is shared while you have the app open and it is
-        what keeps you available: if it goes off, you stop receiving orders. Your customers only
-        see your dot while you carry THEIR order, and never your phone number.</string>
-    <string name="aj_version">Version</string>
-    <string name="aj_instalada">Installed: %1$s (%2$d)</string>
+    <string name="aj_ubicacion_nota">Required. It is shared during your shift and it is what keeps
+        you available: if it goes off, you stop receiving orders. Your customers only see your dot
+        while you carry THEIR order, and never your phone number.</string>
+    <string name="aj_permisos">Permissions</string>
+    <string name="perm_gps">Phone location</string>
+    <string name="perm_notis">Notifications</string>
+    <string name="perm_ok">Allowed</string>
+    <string name="perm_falta">Not allowed</string>
+    <string name="perm_gps_on">On</string>
+    <string name="perm_gps_off">Off</string>
+    <string name="perm_arreglar">Fix</string>
+    <string name="aj_app">App</string>
+    <string name="aj_acerca">About</string>
+    <string name="aj_acerca_sub">Delivery for your restaurant\'s own staff, by Yammbo.</string>
+    <string name="aj_instalada">Version %1$s (%2$d)</string>
     <string name="aj_buscar">Check for updates</string>
-    <string name="aj_guardar">Save</string>
+    <string name="aj_guardar">Save link</string>
     <string name="aj_guardado">Saved</string>
     <string name="aj_enlace_malo">That is not a delivery link. It has to start with https:// and
         contain /repartidor/</string>
