@@ -12,3 +12,20 @@
 *.keystore
 keystore.properties
 signing.properties
+
+# Secrets, local config and build outputs (never commit)
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+key.properties
+google-services.json
+*service-account*.json
+*adminsdk*.json
+*.pem
+*.p12
+*.apk
+*.aab
+*.idsig
+!.env.example
+!.dev.vars.example
